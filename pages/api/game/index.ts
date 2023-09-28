@@ -4,6 +4,7 @@ import Ably from "ably";
 
 const {
   ABLY_API_KEY = "",
+  DEBUG = "false",
 } = process.env;
 
 export type GameState = {
@@ -35,8 +36,8 @@ export type Game = {
 // This is a handy way to turn on and off logging. This flow can be a little
 // confusing, and if you need to debug something, it helps to have some
 // step-by-step messaging.
-const DEBUG = false;
-const debug = (...args: any[]) => DEBUG && console.log(...args);
+const debug = (...args: any[]) =>
+  DEBUG.toLowerCase() === "true" && console.log(...args);
 
 export default async function handler(
   request: NextApiRequest,
@@ -118,12 +119,8 @@ export default async function handler(
       // Store the fact that this player is in this game
       await kv.set(playerId, openGame.id);
 
-      const ably = new Ably.Realtime.Promise(
-        ABLY_API_KEY,
-      );
-
-      await ably.connection.once("connected");
-      const channel = ably.channels.get(openGame.id);
+      const client = new Ably.Rest(ABLY_API_KEY);
+      const channel = client.channels.get(openGame.id);
 
       channel.publish("update", openGame);
 

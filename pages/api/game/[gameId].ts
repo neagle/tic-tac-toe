@@ -32,7 +32,6 @@ export default async function handler(
 
   const { row, column, playerId } = request.body;
 
-  console.log("MOVE: row, column, playerId", row, column, playerId);
   const game: Game | null = await kv.get(gameId);
 
   if (!game) {
@@ -59,12 +58,11 @@ export default async function handler(
 
   kv.set(gameId, game);
 
-  const ably = new Ably.Realtime.Promise(
+  const client = new Ably.Rest(
     ABLY_API_KEY,
   );
 
-  await ably.connection.once("connected");
-  const channel = ably.channels.get(game.id);
+  const channel = client.channels.get(game.id);
 
   await channel.publish("update", game);
 
