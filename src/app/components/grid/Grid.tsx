@@ -1,7 +1,11 @@
 import { useMemo } from "react";
 import { Game } from "../../../../pages/api/game";
 import classnames from "classnames";
-import { isPlayersMove, getGameResultClasses } from "../../../../gameUtils";
+import {
+  isPlayersMove,
+  getGameResult,
+  getGameResultClasses,
+} from "../../../../gameUtils";
 import { X, Y } from "./Pieces";
 
 type GridProps = {
@@ -51,6 +55,7 @@ const Grid = ({
     // feedback -- we'll also receive an update via websocket shortly afterward
     const newGame = structuredClone(game);
     newGame.state.grid[row][column] = game.players[0] === playerId ? "x" : "o";
+    newGame.state.result = getGameResult(newGame.state.grid);
     setGame(newGame);
 
     // Send the move to the back end
@@ -65,7 +70,7 @@ const Grid = ({
 
   return (
     <>
-      <Status game={game} playerId={playerId} />
+      <Status game={game} playerId={playerId} isMyMove={isMyMove} />
       <section
         className={classnames({
           grid: true,
@@ -119,7 +124,15 @@ const Win = ({ grid }: { grid: string[][] }) => {
 
 // This status component is shown above the grid, showing whose turn it is, or
 // whether the game has been won/lost/drawn.
-const Status = ({ game, playerId }: { game: Game; playerId: string }) => {
+const Status = ({
+  game,
+  playerId,
+  isMyMove,
+}: {
+  game: Game;
+  playerId: string;
+  isMyMove: boolean;
+}) => {
   const { result } = game.state;
 
   let statusText;
@@ -127,9 +140,7 @@ const Status = ({ game, playerId }: { game: Game; playerId: string }) => {
     if (game.players.length < 2) {
       statusText = "Waiting for an opponent…";
     } else {
-      statusText = `${
-        game.players[0] === playerId ? "Your" : "Opponent’s"
-      } turn.`;
+      statusText = `${isMyMove ? "Your" : "Opponent’s"} turn.`;
     }
   } else {
     if (result === "draw") {

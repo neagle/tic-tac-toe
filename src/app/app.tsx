@@ -113,6 +113,7 @@ export default function App() {
                 gameId={game.id}
                 players={game.players}
                 fetchGame={fetchGame}
+                gameResult={gameResult}
               />
             </div>
           )}

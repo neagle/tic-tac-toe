@@ -9,6 +9,7 @@ type ChatProps = {
   players: string[];
   gameId: string;
   fetchGame: (forceNewGame: boolean) => void;
+  gameResult: string | null;
 };
 
 type Message = {
@@ -23,7 +24,13 @@ const playerName = (playerId: string, players: string[]) => {
   return players[0] === playerId ? playerNames[0] : playerNames[1];
 };
 
-const Chat = ({ playerId, gameId, players, fetchGame }: ChatProps) => {
+const Chat = ({
+  playerId,
+  gameId,
+  players,
+  fetchGame,
+  gameResult,
+}: ChatProps) => {
   const { channel } = useChannel(gameId, (message: Ably.Types.Message) => {
     const { name, clientId, data: text, timestamp, id } = message;
     if (name === "message") {
@@ -69,9 +76,36 @@ const Chat = ({ playerId, gameId, players, fetchGame }: ChatProps) => {
 
   const { presenceData, updateStatus } = usePresence<string>("chat-status", "");
 
+  const [shouldShowOpponentMessage, setShouldShowOpponentMessage] =
+    useState(false);
+
   const opponentIsHere =
     presenceData.filter((presence) => presence.clientId !== playerId).length >
     0;
+
+  // Create a delay before we show any messages about the opponent leaving.
+  // This gives them a chance to reconnect, AND it prevents any flickering of
+  // this message when the game is initially created.
+  useEffect(() => {
+    let timer: NodeJS.Timeout | undefined = undefined;
+
+    if (!opponentIsHere) {
+      timer = setTimeout(() => {
+        setShouldShowOpponentMessage(true);
+      }, 2000);
+    } else {
+      if (timer !== undefined) {
+        clearTimeout(timer);
+      }
+      setShouldShowOpponentMessage(false);
+    }
+
+    return () => {
+      if (timer !== undefined) {
+        clearTimeout(timer);
+      }
+    };
+  }, [opponentIsHere]);
 
   const stopTyping = () => {
     console.log(`Final input value is: ${inputValue}`);
@@ -148,11 +182,14 @@ const Chat = ({ playerId, gameId, players, fetchGame }: ChatProps) => {
             <b>{playerName(message.clientId, players)}:</b> {message.text}
           </li>
         ))}
-        {opponentIsHere ? (
-          ""
-        ) : (
+        {shouldShowOpponentMessage && !opponentIsHere ? (
           <>
             <li className="text-gray-500">Your opponent has left the game.</li>
+          </>
+        ) : null}
+
+        {shouldShowOpponentMessage && !opponentIsHere && !gameResult ? (
+          <>
             <li className="mt-2">
               <a
                 onClick={() => fetchGame(true)}
@@ -162,9 +199,8 @@ const Chat = ({ playerId, gameId, players, fetchGame }: ChatProps) => {
               </a>
             </li>
           </>
-        )}
+        ) : null}
       </ul>
-      {/* <ul>{peers}</ul> */}
       <div className="p-2 text-xs text-gray-500">
         {statusMessage ? statusMessage : "Chat"}
       </div>
