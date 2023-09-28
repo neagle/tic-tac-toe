@@ -4,24 +4,218 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+  --background-rgb: 214, 219, 220;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+.grid {
+  --size: 200px;
+  --gridSize: 5px;
+  --gridUnit: calc((var(--size) - (var(--gridSize) * 2)) / 3);
+  --unit: calc(var(--size) / 3);
+  margin: 50px;
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
+  height: var(--size);
+  width: var(--size);
+  background-color: black;
+  grid-gap: var(--gridSize);
+  position: relative;
+
+  &:after {
+    --offset: 0;
+    content: "";
+    position: absolute;
+    top: var(--offset);
+    right: var(--offset);
+    left: var(--offset);
+    bottom: var(--offset);
+    border: 10px solid transparent;
+    pointer-events: none;
+    opacity: 0.5;
+    transition: all 0.2s;
+  }
+
+  &.my-move:after {
+    --pulseVariation: 10px;
+    border-color: green;
+    --offset: -20px;
+    top: var(--offset);
+    right: var(--offset);
+    left: var(--offset);
+    bottom: var(--offset);
+
+    animation-name: outlinePulse;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  }
+
+  &.draw {
+    opacity: 0.5;
+  }
+
+  &.game-not-over > .open {
+    cursor: pointer;
+  }
+
+  > div {
+    background-color: rgb(var(--background-rgb));
+    display: grid;
+    justify-items: center;
+    align-items: center;
+    user-select: none;
+    line-height: 0;
+
+    svg {
+      --padding: 5px;
+      --svgSize: calc(var(--unit) - var(--padding) * 2);
+      height: var(--svgSize);
+      width: var(--svgSize);
+      color: blue;
+      animation-name: pieceEnter;
+      animation-duration: 0.3s;
+      animation-iteration-count: 1;
+    }
+  }
+
+  .win {
+    pointer-events: none;
+    border-radius: 5px;
+    display: block;
+    background-color: red;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(var(--gridSize) * 2);
+    > line {
+      color: red;
+      position: absolute;
+    }
+
+    animation-duration: 0.5s;
+    animation-iteration-count: 1;
+
+    &.horizontal {
+      width: 100%;
+      height: calc(var(--gridSize) * 2);
+      animation-name: "drawInHorizontal";
+    }
+
+    &.vertical {
+      height: 100%;
+      width: calc(var(--gridSize) * 2);
+      animation-name: "drawInVertical";
+    }
+    &.diagonal {
+      width: calc((100% - var(--gridSize)) * 1.41421);
+      height: calc(var(--gridSize) * 2);
+      animation-name: "drawInDiagonal";
+    }
+
+    &.horizontal.top {
+      top: calc(var(--gridUnit) / 2 - var(--gridSize));
+    }
+    &.horizontal.middle {
+      top: calc(var(--gridUnit) + var(--gridUnit) / 2);
+    }
+    &.horizontal.bottom {
+      top: auto;
+      bottom: calc(var(--gridUnit) / 2 - var(--gridSize));
+    }
+    &.vertical.left {
+      left: calc(var(--gridUnit) / 2 - var(--gridSize));
+    }
+    &.vertical.middle {
+      left: calc(var(--gridUnit) + var(--gridUnit) / 2);
+    }
+    &.vertical.right {
+      left: auto;
+      right: calc(var(--gridUnit) / 2 - var(--gridSize));
+    }
+    &.diagonal.right {
+      top: auto;
+      bottom: 0;
+      transform-origin: var(--gridSize) var(--gridSize);
+      transform: rotate(-45deg);
+    }
+    &.diagonal.left {
+      transform-origin: var(--gridSize) var(--gridSize);
+      transform: rotate(45deg);
+    }
+  }
+}
+
+@keyframes drawInHorizontal {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes drawInVertical {
+  0% {
+    height: 0;
+  }
+  100% {
+    height: 100%;
+  }
+}
+
+@keyframes drawInDiagonal {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: calc((100% - var(--gridSize)) * 1.41421);
+  }
+}
+
+@keyframes pieceEnter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.restart {
+  &.hidden {
+    opacity: 0;
+  }
+
+  display: block;
+  margin: 1em auto 0;
+  transition: opacity 0.5s;
+  cursor: pointer;
+}
+
+@keyframes outlinePulse {
+  0% {
+    top: var(--offset);
+    right: var(--offset);
+    bottom: var(--offset);
+    left: var(--offset);
+  }
+  50% {
+    top: calc(var(--offset) - var(--pulseVariation));
+    right: calc(var(--offset) - var(--pulseVariation));
+    bottom: calc(var(--offset) - var(--pulseVariation));
+    left: calc(var(--offset) - var(--pulseVariation));
+  }
+  100% {
+    top: var(--offset);
+    right: var(--offset);
+    bottom: var(--offset);
+    left: var(--offset);
+  }
 }
