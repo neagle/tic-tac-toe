@@ -32,11 +32,19 @@ export type Game = {
   state: GameState;
 };
 
+// This is a handy way to turn on and off logging. This flow can be a little
+// confusing, and if you need to debug something, it helps to have some
+// step-by-step messaging.
+const DEBUG = false;
+const debug = (...args: any[]) => DEBUG && console.log(...args);
+
 export default async function handler(
   request: NextApiRequest,
   response: NextApiResponse,
 ) {
-  const { playerId } = request.query;
+  const { playerId, forceNewGame = false } = request.query;
+  debug("New request", { playerId, forceNewGame });
+
   if (typeof playerId !== "string") {
     response.status(400).send(
       JSON.stringify("playerId is required and must be a string"),
@@ -44,56 +52,71 @@ export default async function handler(
     return;
   }
 
-  console.log(`See if player ${playerId} has a game`);
+  // Check if there is a current game for this player
+  let currentGameId: string | null = await kv.get(playerId);
+  debug("currentGameId", currentGameId);
 
-  // check if there is a current game for this player
-  const currentGameId: string | null = await kv.get(playerId);
+  // If the client tells us to force a new game, we need to clear out references
+  // to the current one. This is necessary if a player is in a game and their
+  // opponent abandons it mid-game.
+  if (currentGameId && forceNewGame === "true") {
+    debug("Forcing new game");
+    const currentGame: Game | null = await kv.get(currentGameId);
+    if (currentGame) {
+      currentGame.players.forEach(async (playerId) => await kv.del(playerId));
+    }
+
+    const openGameId: string | null = await kv.get("openGame");
+    if (openGameId === currentGameId) {
+      await kv.del("openGame");
+    }
+
+    await kv.del(playerId);
+    await kv.del(currentGameId);
+    currentGameId = null;
+  }
 
   // Check if this player is in a game
   if (currentGameId) {
-    console.log(`Player ${playerId} is in game ${currentGameId}`);
+    debug("Player is in a game");
     const currentGame = await kv.get(currentGameId);
     return response.status(200).send(JSON.stringify(currentGame));
   } else {
-    console.log(
-      `Player ${playerId} is not in a game... let's see if one's open.`,
-    );
     // If not, check to see if there is an open game
     const openGameId: string | null = await kv.get("openGame");
-    console.log("openGameId?????", openGameId);
+    debug("openGameId", openGameId);
 
     if (openGameId) {
-      console.log(
-        `There is an open game: ${openGameId}!`,
-      );
       const openGame: Game | null = await kv.get(openGameId);
+      debug("openGame", openGame);
 
       // Check for the possibility that our state is broken and we can't find a
       // game with the id indicated in the openGame key
       if (!openGame) {
+        await kv.del(playerId);
         return response.status(500).send(
-          JSON.stringify("broken game state: can't find open game"),
+          JSON.stringify("Broken game state: can't find open game. Try again?"),
         );
       }
 
       if (openGame.players[0] === playerId) {
-        console.log(`The openGame actually belongs to this player!`);
+        // The openGame actually belongs to this player... we need to keep
+        // waiting for an opponent
         return response.status(200).send(JSON.stringify(openGame));
       }
 
-      console.log("Get this game started!");
-      // Add this player to the game
+      // Get this game started!
+      // Add this player to the game and randomize who goes first
       openGame.players = randomizeStartingPlayer(openGame.players[0], playerId);
-      console.log("randomized player order:", openGame.players);
 
       // Update the game with the new player added
-      kv.set(openGame.id, openGame);
+      await kv.set(openGame.id, openGame);
 
       // Game is no longer open!
-      kv.set("openGame", null);
+      await kv.set("openGame", null);
 
       // Store the fact that this player is in this game
-      kv.set(playerId, openGame.id);
+      await kv.set(playerId, openGame.id);
 
       const ably = new Ably.Realtime.Promise(
         ABLY_API_KEY,
@@ -106,11 +129,11 @@ export default async function handler(
 
       return response.status(200).send(JSON.stringify(openGame));
     } else {
-      console.log(`No open game found. Let's create one!`);
+      // No open game found. Let's create one!
       const id = String(+new Date());
 
       // Declare this game open for another player to join
-      kv.set("openGame", id);
+      await kv.set("openGame", id);
 
       const newGame = {
         id,
@@ -119,10 +142,10 @@ export default async function handler(
       };
 
       // Store this game by its ID
-      kv.set(id, newGame);
+      await kv.set(id, newGame);
 
       // Store the fact that this player is in this game
-      kv.set(playerId, id);
+      await kv.set(playerId, id);
 
       return response.status(200).send(JSON.stringify(newGame));
     }

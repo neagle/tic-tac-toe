@@ -1,3 +1,4 @@
+// Find out how many moves have been played on the grid
 export const totalMoves = (grid: string[][]) => {
   return grid.reduce((acc, row) => {
     const rowMoves = row.reduce((acc, cell) => {
@@ -7,6 +8,7 @@ export const totalMoves = (grid: string[][]) => {
   }, 0);
 };
 
+// Find out if it is a given player's move
 export const isPlayersMove = (
   playerIsFirst: boolean,
   grid: string[][],
@@ -15,6 +17,7 @@ export const isPlayersMove = (
   return playerIsFirst ? evenMoves : !evenMoves;
 };
 
+// Return null, "x", "o", or "draw"
 export const getGameResult = (grid: string[][]) => {
   // Check rows
   for (let row = 0; row < 3; row++) {
@@ -56,4 +59,61 @@ export const getGameResult = (grid: string[][]) => {
 
   // If no winner or draw
   return null;
+};
+
+// These classes are used to position the line that indicates where the win
+// occurred
+export const getGameResultClasses = (grid: string[][]) => {
+  const classes = [];
+  if (
+    grid[0][0] !== "" &&
+    grid[0][0] === grid[0][1] &&
+    grid[0][0] === grid[0][2]
+  ) {
+    classes.push("horizontal", "top");
+  } else if (
+    grid[1][0] !== "" &&
+    grid[1][0] === grid[1][1] &&
+    grid[1][0] === grid[1][2]
+  ) {
+    classes.push("horizontal", "middle");
+  } else if (
+    grid[2][0] !== "" &&
+    grid[2][0] === grid[2][1] &&
+    grid[2][0] === grid[2][2]
+  ) {
+    classes.push("horizontal", "bottom");
+  } else if (
+    grid[0][0] !== "" &&
+    grid[0][0] === grid[1][0] &&
+    grid[0][0] === grid[2][0]
+  ) {
+    classes.push("vertical", "left");
+  } else if (
+    grid[0][1] !== "" &&
+    grid[0][1] === grid[1][1] &&
+    grid[0][1] === grid[2][1]
+  ) {
+    classes.push("vertical", "middle");
+  } else if (
+    grid[0][2] !== "" &&
+    grid[0][2] === grid[1][2] &&
+    grid[0][2] === grid[2][2]
+  ) {
+    classes.push("vertical", "right");
+  } else if (
+    grid[0][0] !== "" &&
+    grid[0][0] === grid[1][1] &&
+    grid[0][0] === grid[2][2]
+  ) {
+    classes.push("diagonal", "left");
+  } else if (
+    grid[2][0] !== "" &&
+    grid[2][0] === grid[1][1] &&
+    grid[2][0] === grid[0][2]
+  ) {
+    classes.push("diagonal", "right");
+  }
+
+  return classes;
 };

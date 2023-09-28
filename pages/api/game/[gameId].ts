@@ -19,6 +19,7 @@ export default async function handler(
   response: NextApiResponse,
 ) {
   const { gameId } = request.query;
+
   if (typeof gameId !== "string") {
     return response.status(400).send(
       JSON.stringify("gameId is required and must be a string"),

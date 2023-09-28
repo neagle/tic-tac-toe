@@ -43,7 +43,7 @@ body {
 
   &.my-move:after {
     --pulseVariation: 10px;
-    border-color: green;
+    border-color: hsl(100, 50%, 50%);
     --offset: -20px;
     top: var(--offset);
     right: var(--offset);
@@ -73,6 +73,12 @@ body {
     line-height: 0;
 
     svg {
+      &.x {
+        color: orange;
+      }
+      &.o {
+        color: green;
+      }
       --padding: 5px;
       --svgSize: calc(var(--unit) - var(--padding) * 2);
       height: var(--svgSize);
@@ -99,24 +105,24 @@ body {
       position: absolute;
     }
 
-    animation-duration: 0.5s;
+    animation-duration: 1.5s;
     animation-iteration-count: 1;
 
     &.horizontal {
       width: 100%;
       height: calc(var(--gridSize) * 2);
-      animation-name: "drawInHorizontal";
+      animation-name: drawInHorizontal;
     }
 
     &.vertical {
       height: 100%;
       width: calc(var(--gridSize) * 2);
-      animation-name: "drawInVertical";
+      animation-name: drawInVertical;
     }
     &.diagonal {
       width: calc((100% - var(--gridSize)) * 1.41421);
       height: calc(var(--gridSize) * 2);
-      animation-name: "drawInDiagonal";
+      animation-name: drawInDiagonal;
     }
 
     &.horizontal.top {

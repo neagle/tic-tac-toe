@@ -4,7 +4,7 @@ export const X = () => {
   const inset = 11;
   const size = 100;
   return (
-    <svg viewBox={`0 0 ${size} ${size}`}>
+    <svg viewBox={`0 0 ${size} ${size}`} className="x">
       <line
         x1={inset}
         y1={inset}
@@ -34,7 +34,7 @@ export const Y = () => {
   const size = 100;
   const circleSize = size - inset - strokeWidth;
   return (
-    <svg viewBox={`0 0 ${size} ${size}`}>
+    <svg viewBox={`0 0 ${size} ${size}`} className="o">
       <circle
         cx={size / 2}
         cy={size / 2}
