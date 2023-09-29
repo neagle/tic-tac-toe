@@ -229,7 +229,7 @@ const Chat = ({
       </div>
       <div className="flex">
         <input
-          className="p-2 focus:outline outline-4 outline-red-500"
+          className="grow p-2 focus:outline outline-4 outline-red-500"
           type="text"
           autoFocus={true}
           onChange={onChange}
@@ -237,7 +237,7 @@ const Chat = ({
           value={inputValue}
         />
         <button
-          className="p-2 disabled:opacity-50"
+          className="p-2 pr-0 disabled:opacity-50"
           onClick={onSend}
           disabled={inputValue === ""}
         >

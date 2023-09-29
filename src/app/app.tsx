@@ -103,7 +103,7 @@ export default function App() {
             )}
           </div>
           {game && game.players.length === 2 && (
-            <div>
+            <div className="w-80">
               <Chat
                 playerId={playerId}
                 gameId={game.id}
