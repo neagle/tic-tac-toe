@@ -1,14 +1,28 @@
 import { kv } from "@vercel/kv";
 import { NextApiRequest, NextApiResponse } from "next";
 import Ably from "ably";
-import { getGameResult, isPlayersMove } from "../../../gameUtils";
-import { Game } from "./index";
+import {
+  getGameResult,
+  isPlayersMove,
+  translatePlayerName,
+} from "../../../src/gameUtils";
+import { Game, GameResult } from "../../../src/types";
 
 const {
   ABLY_API_KEY = "",
 } = process.env;
 
-const endGame = (game: Game) => {
+const client = new Ably.Rest(
+  ABLY_API_KEY,
+);
+
+const endGame = async (game: Game, result: GameResult) => {
+  const channel = await client.channels.get(game.id);
+
+  const resultMessage = result === "draw"
+    ? "It’s a draw."
+    : `${translatePlayerName(result)} wins!`;
+  await channel.publish("message", resultMessage);
   kv.del(game.id);
   kv.del(game.players[0]);
   kv.del(game.players[1]);
@@ -53,17 +67,12 @@ export default async function handler(
   const result = getGameResult(game.state.grid);
   if (result) {
     game.state.result = result;
-    endGame(game);
+    endGame(game, result);
   }
 
   kv.set(gameId, game);
 
-  const client = new Ably.Rest(
-    ABLY_API_KEY,
-  );
-
-  const channel = client.channels.get(game.id);
-
+  const channel = await client.channels.get(gameId);
   await channel.publish("update", game);
 
   return response.status(200).send("Success");

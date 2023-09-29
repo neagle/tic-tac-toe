@@ -1,16 +1,12 @@
 import { kv } from "@vercel/kv";
 import { NextApiRequest, NextApiResponse } from "next";
 import Ably from "ably";
+import { Game, GameState } from "../../../src/types";
 
 const {
   ABLY_API_KEY = "",
   DEBUG = "false",
 } = process.env;
-
-export type GameState = {
-  grid: string[][];
-  result: string | null;
-};
 
 function newGameState(): GameState {
   return {
@@ -19,19 +15,13 @@ function newGameState(): GameState {
       ["", "", ""],
       ["", "", ""],
     ],
-    result: null,
+    result: "",
   };
 }
 
 function randomizeStartingPlayer(player1: string, player2: string) {
   return Math.random() < 0.5 ? [player1, player2] : [player2, player1];
 }
-
-export type Game = {
-  id: string;
-  players: string[];
-  state: GameState;
-};
 
 // This is a handy way to turn on and off logging. This flow can be a little
 // confusing, and if you need to debug something, it helps to have some
@@ -120,7 +110,7 @@ export default async function handler(
       await kv.set(playerId, openGame.id);
 
       const client = new Ably.Rest(ABLY_API_KEY);
-      const channel = client.channels.get(openGame.id);
+      const channel = await client.channels.get(openGame.id);
 
       await channel.publish("update", openGame);
 

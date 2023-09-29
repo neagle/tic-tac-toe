@@ -1,5 +1,18 @@
+import { GameResult, Grid, PlayerName } from "./types";
+
+// Use times / circle unicode symbols for player names instead of x and o
+export const playerNames = ["×", "○"];
+
+export const translatePlayerName = (name: string) => {
+  if (name === "x") {
+    return playerNames[0];
+  } else if (name === "o") {
+    return playerNames[1];
+  }
+};
+
 // Find out how many moves have been played on the grid
-export const totalMoves = (grid: string[][]) => {
+export const totalMoves = (grid: Grid) => {
   return grid.reduce((acc, row) => {
     const rowMoves = row.reduce((acc, cell) => {
       return cell !== "" ? acc + 1 : acc;
@@ -11,14 +24,13 @@ export const totalMoves = (grid: string[][]) => {
 // Find out if it is a given player's move
 export const isPlayersMove = (
   playerIsFirst: boolean,
-  grid: string[][],
+  grid: Grid,
 ) => {
   const evenMoves = totalMoves(grid) % 2 === 0;
   return playerIsFirst ? evenMoves : !evenMoves;
 };
 
-// Return null, "x", "o", or "draw"
-export const getGameResult = (grid: string[][]) => {
+export const getGameResult = (grid: Grid) => {
   // Check rows
   for (let row = 0; row < 3; row++) {
     if (
@@ -41,13 +53,15 @@ export const getGameResult = (grid: string[][]) => {
 
   // Check diagonals
   if (
-    grid[0][0] !== "" && grid[0][0] === grid[1][1] && grid[0][0] === grid[2][2]
+    grid[0][0] !== "" && grid[0][0] === grid[1][1] &&
+    grid[0][0] === grid[2][2]
   ) {
     return grid[0][0];
   }
 
   if (
-    grid[0][2] !== "" && grid[0][2] === grid[1][1] && grid[0][2] === grid[2][0]
+    grid[0][2] !== "" && grid[0][2] === grid[1][1] &&
+    grid[0][2] === grid[2][0]
   ) {
     return grid[0][2];
   }
@@ -58,7 +72,11 @@ export const getGameResult = (grid: string[][]) => {
   }
 
   // If no winner or draw
-  return null;
+  return "";
+};
+
+export const getGameResultMessage = (result: string) => {
+  const resultMessage = result === "draw" ? "It’s a draw!" : `${result} wins!`;
 };
 
 // These classes are used to position the line that indicates where the win

@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as Ably from "ably";
-import { useChannel, usePresence } from "ably/react";
+import {
+  useChannel,
+  usePresence,
+  useConnectionStateListener,
+} from "ably/react";
+import { playerNames } from "../../../gameUtils";
+import { Message } from "../../../types";
 
 const TYPING_TIMEOUT = 2000;
 
@@ -8,26 +14,26 @@ type ChatProps = {
   playerId: string;
   players: string[];
   gameId: string;
+  setGame: (game: any) => void;
   fetchGame: (forceNewGame: boolean) => void;
   gameResult: string | null;
 };
 
-type Message = {
-  clientId: string;
-  text: string;
-  timestamp: number;
-  id: string;
-};
-
-const playerNames = ["×", "○"];
 const playerName = (playerId: string, players: string[]) => {
-  return players[0] === playerId ? playerNames[0] : playerNames[1];
+  if (playerId === players[0]) {
+    return playerNames[0];
+  } else if (playerId === players[1]) {
+    return playerNames[1];
+  } else {
+    return;
+  }
 };
 
 const Chat = ({
   playerId,
   gameId,
   players,
+  setGame,
   fetchGame,
   gameResult,
 }: ChatProps) => {
@@ -41,7 +47,6 @@ const Chat = ({
     }
 
     if (name === "startedTyping") {
-      updateStatus("is typing…");
       setWhoIsCurrentlyTyping((currentlyTyping) => [
         ...currentlyTyping,
         clientId,
@@ -49,12 +54,13 @@ const Chat = ({
     }
 
     if (name === "stoppedTyping") {
-      updateStatus("");
       setWhoIsCurrentlyTyping((currentlyTyping) =>
         currentlyTyping.filter((id) => id !== clientId)
       );
     }
   });
+
+  const opponentId = players.filter((id) => id !== playerId)[0];
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
@@ -74,14 +80,15 @@ const Chat = ({
     setMessages([]);
   }, [gameId]);
 
-  const { presenceData, updateStatus } = usePresence<string>("chat-status", "");
+  const { presenceData } = usePresence<string>(gameId, "present");
 
   const [shouldShowOpponentMessage, setShouldShowOpponentMessage] =
     useState(false);
 
-  const opponentIsHere =
-    presenceData.filter((presence) => presence.clientId !== playerId).length >
-    0;
+  const opponentIsHere = useMemo(
+    () => !!presenceData.find((presence) => presence.clientId === opponentId),
+    [presenceData, opponentId]
+  );
 
   // Create a delay before we show any messages about the opponent leaving.
   // This gives them a chance to reconnect, AND it prevents any flickering of
@@ -108,7 +115,6 @@ const Chat = ({
   }, [opponentIsHere]);
 
   const stopTyping = () => {
-    console.log(`Final input value is: ${inputValue}`);
     setStartedTyping(false); // Reset the startedTyping state.
     channel.publish("stoppedTyping", playerId);
   };
@@ -118,7 +124,6 @@ const Chat = ({
 
     // If the user hasn't started typing yet, log that they've started typing.
     if (!startedTyping) {
-      console.log("User started typing");
       setStartedTyping(true);
       channel.publish("startedTyping", playerId);
     }
@@ -177,11 +182,23 @@ const Chat = ({
   return (
     <div className="flex flex-col h-full">
       <ul className="p-2 grow bg-white min-h-[200px] sm:min-h-0">
-        {messages.map((message) => (
-          <li key={message.id}>
-            <b>{playerName(message.clientId, players)}:</b> {message.text}
-          </li>
-        ))}
+        {messages.map((message) => {
+          const name = playerName(message.clientId, players);
+
+          if (name) {
+            return (
+              <li key={message.id}>
+                <b>{name}:</b> {message.text}
+              </li>
+            );
+          } else {
+            return (
+              <li key={message.id} className="text-gray-500">
+                {message.text}
+              </li>
+            );
+          }
+        })}
         {shouldShowOpponentMessage && !opponentIsHere ? (
           <>
             <li className="text-gray-500">Your opponent has left the game.</li>
@@ -192,7 +209,13 @@ const Chat = ({
           <>
             <li className="mt-2">
               <a
-                onClick={() => fetchGame(true)}
+                onClick={() => {
+                  // This is a load-bearing setGame!
+                  // Without it, usePresence doesn't seem to get reset with the new
+                  // game. I don't like this mystery.
+                  setGame(null);
+                  fetchGame(true);
+                }}
                 className="cursor-pointer underline underline-offset-2 text-blue-500"
               >
                 Play again?

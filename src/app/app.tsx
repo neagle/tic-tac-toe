@@ -3,14 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useConditionalEffect from "./hooks/useConditionalEffect";
 import * as Ably from "ably";
-import { AblyProvider, useChannel } from "ably/react";
+import { AblyProvider } from "ably/react";
 import { useLocalStorage as _useLocalStorage } from "@uidotdev/usehooks";
 import { v4 as uuid } from "uuid";
 import Grid from "./components/grid/Grid";
 import Chat from "./components/chat/Chat";
-import { getGameResult } from "../../gameUtils";
-
-import { Game } from "../../pages/api/game";
+import { getGameResult } from "../gameUtils";
+import { Game } from "../types";
 
 // Wrap the useLocalStorage hook to prefix the key with a unique string
 // This isn't such a big deal in deployment, where browsers namespace local
@@ -34,21 +33,21 @@ export default function App() {
       authUrl: "/api/ably/auth",
       clientId: playerId,
     });
-  }, []);
+  }, [playerId]);
 
-  const [channel, setChannel] =
-    useState<Ably.Types.RealtimeChannelPromise | null>(null);
-
-  const [game, setGame] = useLocalStorage("game", null);
+  const [game, setGame] = useState<Game | null>(null);
 
   const fetchGame = useCallback(
     (forceNewGame = false) => {
-      fetch(`/api/game?playerId=${playerId}&forceNewGame=${forceNewGame}`)
+      fetch(
+        `/api/game?playerId=${playerId}&forceNewGame=${
+          forceNewGame === true ? "true" : "false"
+        }`
+      )
         .then((gameResponse) => gameResponse.json())
         .then((currentGame) => {
-          console.log("currentGame", currentGame);
-          if (typeof currentGame === "object") {
-            setGame(currentGame);
+          if (currentGame?.id !== game?.id) {
+            setGame(currentGame as Game);
           }
         });
     },
@@ -66,7 +65,7 @@ export default function App() {
     if (!client || !game) return;
 
     const gameChannel = client.channels.get(game.id);
-    setChannel(game.id);
+    gameChannel.presence.enter();
 
     gameChannel.subscribe("update", (message: Ably.Types.Message) => {
       setGame(message.data);
@@ -74,9 +73,8 @@ export default function App() {
 
     // Cleanup
     return () => {
-      if (channel) {
+      if (gameChannel) {
         gameChannel.unsubscribe("update");
-        setChannel(null);
       }
     };
   }, [client, game?.id]);
@@ -87,8 +85,6 @@ export default function App() {
 
     return getGameResult(game?.state.grid);
   }, [game?.state?.grid]);
-
-  console.log("game", game);
 
   return (
     <AblyProvider client={client}>
@@ -112,6 +108,7 @@ export default function App() {
                 playerId={playerId}
                 gameId={game.id}
                 players={game.players}
+                setGame={setGame}
                 fetchGame={fetchGame}
                 gameResult={gameResult}
               />

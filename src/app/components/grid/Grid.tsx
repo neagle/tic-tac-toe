@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import { Game } from "../../../../pages/api/game";
+import { Game } from "../../../types";
 import classnames from "classnames";
 import {
   isPlayersMove,
   getGameResult,
   getGameResultClasses,
-} from "../../../../gameUtils";
+} from "../../../gameUtils";
 import { X, Y } from "./Pieces";
 
 type GridProps = {
@@ -13,7 +13,7 @@ type GridProps = {
   game: Game;
   gameResult: boolean | string | null;
   className?: string;
-  setGame: (game: Game) => void;
+  setGame: (game: Game | null) => void;
   fetchGame: () => void;
 };
 
@@ -43,6 +43,9 @@ const Grid = ({
   }, [game?.state?.grid, playerId]);
 
   const onMove = (row: number, column: number) => {
+    // Can't move if the game is over
+    if (gameResult) return;
+
     // Can't move if it's not your turn
     if (!isMyMove) return;
 
@@ -84,7 +87,7 @@ const Grid = ({
               <div
                 key={`${rowIndex}-${columnIndex}`}
                 className={classnames({
-                  "cursor-pointer": isMyMove && column === "",
+                  "cursor-pointer": isMyMove && column === "" && !gameResult,
                   open: column === "",
                   filled: column !== "",
                 })}
@@ -99,7 +102,14 @@ const Grid = ({
       </section>
       {state.result && (
         <button
-          onClick={fetchGame}
+          onClick={() => {
+            // This is a load-bearing setGame!
+            // Without it, usePresence doesn't seem to get reset with the new
+            // game. I don't like this mystery.
+            setGame(null);
+
+            fetchGame();
+          }}
           className="border-4 border-black p-2 hover:bg-green-500 transition-colors mb-8 sm:mb-0"
         >
           Play again?
