@@ -22,6 +22,11 @@ const useLocalStorage = (key: string, initialValue: any) => {
   return _useLocalStorage(prefixedKey, initialValue);
 };
 
+const DEBUG = "true";
+
+const debug = (...args: any[]) =>
+  DEBUG.toLowerCase() === "true" && console.log(...args);
+
 export default function App() {
   // Generate and store a unique player ID
   // Save it in local storage so that it persists across page reloads
@@ -62,18 +67,27 @@ export default function App() {
   // When the game.id changes, subscribe to updates on that game's channel
   // This is how we'll get updates when the other player makes a move
   useEffect(() => {
-    if (!client || !game) return;
+    if (!client || !game) {
+      debug(
+        "game.id (or client) changed, but didn't have either a client or game",
+        game?.id
+      );
+      return;
+    }
 
     const gameChannel = client.channels.get(game.id);
+    debug("Subscribing to game channel:", game.id);
     gameChannel.presence.enter();
 
     gameChannel.subscribe("update", (message: Ably.Types.Message) => {
+      debug("Received update from game channel:", message);
       setGame(message.data);
     });
 
     // Cleanup
     return () => {
       if (gameChannel) {
+        debug("Unsubscribing from gameChannel", game.id);
         gameChannel.unsubscribe("update");
       }
     };

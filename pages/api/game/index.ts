@@ -122,8 +122,8 @@ export default async function handler(
 
       const client = new Ably.Rest(ABLY_API_KEY);
       const channel = await client.channels.get(openGame.id);
-      debug("Publishing update to channel", openGame.id, openGame);
 
+      debug("Publishing update to channel", openGame.id, openGame);
       await channel.publish("update", openGame);
 
       return response.status(200).send(JSON.stringify(openGame));
