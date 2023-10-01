@@ -1,15 +1,48 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import useConditionalEffect from "./hooks/useConditionalEffect";
 import * as Ably from "ably";
 import { AblyProvider } from "ably/react";
 import { useLocalStorage as _useLocalStorage } from "@uidotdev/usehooks";
 import { v4 as uuid } from "uuid";
-import Grid from "./components/grid/Grid";
-import Chat from "./components/chat/Chat";
-import { getGameResult } from "../gameUtils";
-import { Game } from "../types";
+import { GameTypes } from "../types";
+import Game from "./components/Game";
+import { getGameResult, isPlayersMove } from "../gameUtils";
+
+const DEBUG = "true";
+
+const debug = (...args: any[]) =>
+  DEBUG.toLowerCase() === "true" && console.log(...args);
+
+export type GameStateContext = {
+  playerId: string;
+  game?: GameTypes.Game | null;
+  fetchGame: (forceNewGame?: boolean) => void;
+  setGame: (game: GameTypes.Game | null) => void;
+  gameResult: string | null;
+  debug: (...args: any[]) => void;
+  isMyMove: boolean;
+};
+
+const GameContext = createContext<GameStateContext>({
+  // Set defaults
+  playerId: "",
+  fetchGame: () => {},
+  setGame: () => {},
+  gameResult: null,
+  isMyMove: false,
+  debug,
+});
+
+export const useGameStateContext = () => useContext(GameContext);
 
 // Wrap the useLocalStorage hook to prefix the key with a unique string
 // This isn't such a big deal in deployment, where browsers namespace local
@@ -21,11 +54,6 @@ const useLocalStorage = (key: string, initialValue: any) => {
   const prefixedKey = LOCAL_STORAGE_KEY + key;
   return _useLocalStorage(prefixedKey, initialValue);
 };
-
-const DEBUG = "true";
-
-const debug = (...args: any[]) =>
-  DEBUG.toLowerCase() === "true" && console.log(...args);
 
 export default function App() {
   // Generate and store a unique player ID
@@ -40,10 +68,12 @@ export default function App() {
     });
   }, [playerId]);
 
-  const [game, setGame] = useState<Game | null>(null);
+  const [game, setGame] = useState<GameTypes.Game | null>(null);
 
   const fetchGame = useCallback(
     (forceNewGame = false) => {
+      debug(`fetch new game (force? ${forceNewGame})`);
+      // nit -- better way to change boolean to string
       fetch(
         `/api/game?playerId=${playerId}&forceNewGame=${
           forceNewGame === true ? "true" : "false"
@@ -51,9 +81,12 @@ export default function App() {
       )
         .then((gameResponse) => gameResponse.json())
         .then((currentGame) => {
-          if (currentGame?.id !== game?.id) {
-            setGame(currentGame as Game);
-          }
+          debug("received game from server:", currentGame);
+          // if (currentGame?.id !== game?.id) {
+          //   debug("game changed, setting new game");
+          //   setGame(currentGame as Game);
+          // }
+          setGame(currentGame as GameTypes.Game);
         });
     },
     [playerId, setGame]
@@ -64,35 +97,6 @@ export default function App() {
   // game. If they don't, it will create a new one.
   useConditionalEffect(fetchGame, [playerId]);
 
-  // When the game.id changes, subscribe to updates on that game's channel
-  // This is how we'll get updates when the other player makes a move
-  useEffect(() => {
-    if (!client || !game) {
-      debug(
-        "game.id (or client) changed, but didn't have either a client or game",
-        game?.id
-      );
-      return;
-    }
-
-    const gameChannel = client.channels.get(game.id);
-    debug("Subscribing to game channel:", game.id);
-    gameChannel.presence.enter();
-
-    gameChannel.subscribe("update", (message: Ably.Types.Message) => {
-      debug("Received update from game channel:", message);
-      setGame(message.data);
-    });
-
-    // Cleanup
-    return () => {
-      if (gameChannel) {
-        debug("Unsubscribing from gameChannel", game.id);
-        gameChannel.unsubscribe("update");
-      }
-    };
-  }, [client, game?.id]);
-
   // The result of the game, if it's been concluded.
   const gameResult = useMemo(() => {
     if (!game?.state?.grid) return null;
@@ -100,36 +104,34 @@ export default function App() {
     return getGameResult(game?.state.grid);
   }, [game?.state?.grid]);
 
+  // Is it the current player's move?
+  const isMyMove = useMemo(() => {
+    if (!game) return false;
+
+    const playerIsFirst = game.players[0] === playerId;
+    return isPlayersMove(playerIsFirst, game.state.grid);
+  }, [game?.state?.grid, playerId]);
+
   return (
     <AblyProvider client={client}>
-      <main className="flex min-h-screen flex-col items-center p-24">
-        <h1 className="text-xl mb-5 font-bold">Tic-Tac-Toe</h1>
-        <div className="flex flex-col sm:flex-row">
-          <div className="text-center">
-            {game && (
-              <Grid
-                playerId={playerId}
-                setGame={setGame}
-                game={game}
-                gameResult={gameResult}
-                fetchGame={fetchGame}
-              />
-            )}
-          </div>
-          {game && game.players.length === 2 && (
-            <div className="w-80">
-              <Chat
-                playerId={playerId}
-                gameId={game.id}
-                players={game.players}
-                setGame={setGame}
-                fetchGame={fetchGame}
-                gameResult={gameResult}
-              />
-            </div>
-          )}
-        </div>
-      </main>
+      {game !== null && (
+        <GameContext.Provider
+          value={{
+            playerId,
+            game,
+            fetchGame,
+            setGame,
+            gameResult,
+            isMyMove,
+            debug,
+          }}
+        >
+          <main className="flex min-h-screen flex-col items-center p-24">
+            <h1 className="text-xl mb-5 font-bold">Tic-Tac-Toe</h1>
+            <Game />
+          </main>
+        </GameContext.Provider>
+      )}
     </AblyProvider>
   );
 }

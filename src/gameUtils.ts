@@ -1,4 +1,4 @@
-import { GameResult, Grid, PlayerName } from "./types";
+import { GameTypes } from "./types";
 
 // Use times / circle unicode symbols for player names instead of x and o
 export const playerNames = ["×", "○"];
@@ -12,7 +12,7 @@ export const translatePlayerName = (name: string) => {
 };
 
 // Find out how many moves have been played on the grid
-export const totalMoves = (grid: Grid) => {
+export const totalMoves = (grid: GameTypes.Grid) => {
   return grid.reduce((acc, row) => {
     const rowMoves = row.reduce((acc, cell) => {
       return cell !== "" ? acc + 1 : acc;
@@ -24,13 +24,13 @@ export const totalMoves = (grid: Grid) => {
 // Find out if it is a given player's move
 export const isPlayersMove = (
   playerIsFirst: boolean,
-  grid: Grid,
+  grid: GameTypes.Grid,
 ) => {
   const evenMoves = totalMoves(grid) % 2 === 0;
   return playerIsFirst ? evenMoves : !evenMoves;
 };
 
-export const getGameResult = (grid: Grid) => {
+export const getGameResult = (grid: GameTypes.Grid) => {
   // Check rows
   for (let row = 0; row < 3; row++) {
     if (

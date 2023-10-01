@@ -1,23 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import * as Ably from "ably";
-import {
-  useChannel,
-  usePresence,
-  useConnectionStateListener,
-} from "ably/react";
+import { useChannel, usePresence } from "ably/react";
 import { playerNames } from "../../../gameUtils";
-import { Message } from "../../../types";
+import { ChatTypes } from "../../../types";
+import { useGameStateContext } from "../../app";
 
 const TYPING_TIMEOUT = 2000;
-
-type ChatProps = {
-  playerId: string;
-  players: string[];
-  gameId: string;
-  setGame: (game: any) => void;
-  fetchGame: (forceNewGame: boolean) => void;
-  gameResult: string | null;
-};
 
 const playerName = (playerId: string, players: string[]) => {
   if (playerId === players[0]) {
@@ -29,15 +17,13 @@ const playerName = (playerId: string, players: string[]) => {
   }
 };
 
-const Chat = ({
-  playerId,
-  gameId,
-  players,
-  setGame,
-  fetchGame,
-  gameResult,
-}: ChatProps) => {
-  const { channel } = useChannel(gameId, (message: Ably.Types.Message) => {
+const Chat = () => {
+  const { playerId, game, setGame, fetchGame, gameResult } =
+    useGameStateContext();
+
+  if (!game) return;
+
+  const { channel } = useChannel(game.id, (message: Ably.Types.Message) => {
     const { name, clientId, data: text, timestamp, id } = message;
     if (name === "message") {
       setMessages((messages) => [
@@ -60,9 +46,9 @@ const Chat = ({
     }
   });
 
-  const opponentId = players.filter((id) => id !== playerId)[0];
+  const opponentId = game.players.filter((id) => id !== playerId)[0];
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatTypes.Message[]>([]);
   const [inputValue, setInputValue] = useState<string>("");
   const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
   const [startedTyping, setStartedTyping] = useState(false);
@@ -75,12 +61,7 @@ const Chat = ({
     setHasMounted(true);
   }, []);
 
-  // Clear messages when the game changes
-  useEffect(() => {
-    setMessages([]);
-  }, [gameId]);
-
-  const { presenceData } = usePresence<string>(gameId, "present");
+  const { presenceData } = usePresence<string>(game.id, "present");
 
   const [shouldShowOpponentMessage, setShouldShowOpponentMessage] =
     useState(false);
@@ -176,14 +157,14 @@ const Chat = ({
   const opponentIsTyping = whoIsCurrentlyTyping.filter((id) => id !== playerId);
   const statusMessage =
     opponentIsTyping.length > 0
-      ? `${playerName(opponentIsTyping[0], players)} is typing…`
+      ? `${playerName(opponentIsTyping[0], game.players)} is typing…`
       : "";
 
   return (
     <div className="flex flex-col h-full">
       <ul className="p-2 grow bg-white min-h-[200px] sm:min-h-0">
         {messages.map((message) => {
-          const name = playerName(message.clientId, players);
+          const name = playerName(message.clientId, game.players);
 
           if (name) {
             return (
@@ -210,10 +191,6 @@ const Chat = ({
             <li className="mt-2">
               <a
                 onClick={() => {
-                  // This is a load-bearing setGame!
-                  // Without it, usePresence doesn't seem to get reset with the new
-                  // game. I don't like this mystery.
-                  setGame(null);
                   fetchGame(true);
                 }}
                 className="cursor-pointer underline underline-offset-2 text-blue-500"

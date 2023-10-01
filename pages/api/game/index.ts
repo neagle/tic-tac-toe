@@ -1,14 +1,14 @@
 import { kv } from "@vercel/kv";
 import { NextApiRequest, NextApiResponse } from "next";
-import Ably from "ably";
-import { Game, GameState } from "../../../src/types";
+import Ably from "ably/promises";
+import { GameTypes } from "../../../src/types";
 
 const {
   ABLY_API_KEY = "",
   DEBUG = "false",
 } = process.env;
 
-function newGameState(): GameState {
+function newGameState(): GameTypes.GameState {
   return {
     grid: [
       ["", "", ""],
@@ -23,9 +23,6 @@ function randomizeStartingPlayer(player1: string, player2: string) {
   return Math.random() < 0.5 ? [player1, player2] : [player2, player1];
 }
 
-// This is a handy way to turn on and off logging. This flow can be a little
-// confusing, and if you need to debug something, it helps to have some
-// step-by-step messaging.
 const debug = (...args: any[]) =>
   DEBUG.toLowerCase() === "true" && console.log(...args);
 
@@ -52,7 +49,7 @@ export default async function handler(
   // opponent abandons it mid-game.
   if (currentGameId && forceNewGame === "true") {
     debug("Forcing new game");
-    const currentGame: Game | null = await kv.get(currentGameId);
+    const currentGame: GameTypes.Game | null = await kv.get(currentGameId);
     if (currentGame) {
       currentGame.players.forEach(async (playerId) => await kv.del(playerId));
     }
@@ -81,7 +78,7 @@ export default async function handler(
 
     if (openGameId) {
       // Get the game data for the openGameId
-      const openGame: Game | null = await kv.get(openGameId);
+      const openGame: GameTypes.Game | null = await kv.get(openGameId);
       debug("openGame data", openGame);
 
       // Check for the possibility that our state is broken and we can't find a
@@ -93,16 +90,6 @@ export default async function handler(
           JSON.stringify("Broken game state: can't find open game. Try again?"),
         );
       }
-
-      // if (openGame.players[0] === playerId) {
-      //   // The openGame actually belongs to this player... we need to keep
-      //   // waiting for an opponent
-      //   // This check shouldn't be necessary.
-      //   debug(
-      //     "The openGame belongs to this player, so we need to keep waiting.",
-      //   );
-      //   return response.status(200).send(JSON.stringify(openGame));
-      // }
 
       // Get this game started!
       debug(
@@ -121,30 +108,40 @@ export default async function handler(
       await kv.set(playerId, openGame.id);
 
       const client = new Ably.Rest(ABLY_API_KEY);
-      const channel = await client.channels.get(openGame.id);
+      const channel = client.channels.get(openGame.id);
 
       debug("Publishing update to channel", openGame.id, openGame);
       await channel.publish("update", openGame);
-
       return response.status(200).send(JSON.stringify(openGame));
+
+      // channel.publish("update", openGame, (err) => {
+      //   if (err) {
+      //     debug("Error publishing update", err);
+      //     return response.status(500).send("Error");
+      //   } else {
+      //     debug("Success publishing update");
+      //     return response.status(200).send(JSON.stringify(openGame));
+      //   }
+      // });
     } else {
+      debug("No open game found. Let's create one!");
       // No open game found. Let's create one!
-      const id = String(+new Date());
+      const newGameId = String(+new Date());
 
       // Declare this game open for another player to join
-      await kv.set("openGame", id);
+      await kv.set("openGame", newGameId);
 
       const newGame = {
-        id,
+        id: newGameId,
         players: [playerId],
         state: newGameState(),
       };
 
       // Store this game by its ID
-      await kv.set(id, newGame);
+      await kv.set(newGameId, newGame);
 
       // Store the fact that this player is in this game
-      await kv.set(playerId, id);
+      await kv.set(playerId, newGameId);
 
       return response.status(200).send(JSON.stringify(newGame));
     }

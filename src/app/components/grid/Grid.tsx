@@ -1,30 +1,20 @@
-import { useMemo } from "react";
-import { Game } from "../../../types";
+import { useContext, useMemo } from "react";
+import { useGameStateContext } from "../../app";
+import { GameTypes } from "../../../types";
 import classnames from "classnames";
-import {
-  isPlayersMove,
-  getGameResult,
-  getGameResultClasses,
-} from "../../../gameUtils";
+import { getGameResult, getGameResultClasses } from "../../../gameUtils";
 import { X, Y } from "./Pieces";
 
 type GridProps = {
-  playerId: string;
-  game: Game;
-  gameResult: boolean | string | null;
   className?: string;
-  setGame: (game: Game | null) => void;
-  fetchGame: () => void;
 };
 
-const Grid = ({
-  playerId,
-  game,
-  className = "",
-  setGame,
-  gameResult,
-  fetchGame,
-}: GridProps) => {
+const Grid = ({ className = "" }: GridProps) => {
+  const { playerId, game, setGame, gameResult, fetchGame, isMyMove } =
+    useGameStateContext();
+
+  if (!game) return;
+
   // If there's only one player, we're waiting for the game to begin.
   if (game.players.length < 2) {
     return <div>Waiting for an opponent…</div>;
@@ -33,14 +23,6 @@ const Grid = ({
   // Set some shortcuts for the sake of brevity
   const state = game?.state;
   const grid = state?.grid;
-
-  // Is it the current player's move?
-  const isMyMove = useMemo(() => {
-    if (!game) return false;
-
-    const playerIsFirst = game.players[0] === playerId;
-    return isPlayersMove(playerIsFirst, grid);
-  }, [game?.state?.grid, playerId]);
 
   const onMove = (row: number, column: number) => {
     // Can't move if the game is over
@@ -139,7 +121,7 @@ const Status = ({
   playerId,
   isMyMove,
 }: {
-  game: Game;
+  game: GameTypes.Game;
   playerId: string;
   isMyMove: boolean;
 }) => {

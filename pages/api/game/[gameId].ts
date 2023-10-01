@@ -1,22 +1,26 @@
 import { kv } from "@vercel/kv";
 import { NextApiRequest, NextApiResponse } from "next";
-import Ably from "ably";
+import Ably from "ably/promises";
 import {
   getGameResult,
   isPlayersMove,
   translatePlayerName,
 } from "../../../src/gameUtils";
-import { Game, GameResult } from "../../../src/types";
+import { GameTypes } from "../../../src/types";
 
 const {
   ABLY_API_KEY = "",
+  DEBUG = "false",
 } = process.env;
+
+const debug = (...args: any[]) =>
+  DEBUG.toLowerCase() === "true" && console.log(...args);
 
 const client = new Ably.Rest(
   ABLY_API_KEY,
 );
 
-const endGame = async (game: Game, result: GameResult) => {
+const endGame = async (game: GameTypes.Game, result: GameTypes.GameResult) => {
   const channel = await client.channels.get(game.id);
 
   const resultMessage = result === "draw"
@@ -34,7 +38,10 @@ export default async function handler(
 ) {
   const { gameId } = request.query;
 
+  debug("Received a move for ", gameId);
+
   if (typeof gameId !== "string") {
+    debug("gameId is required and must be a string");
     return response.status(400).send(
       JSON.stringify("gameId is required and must be a string"),
     );
@@ -45,10 +52,12 @@ export default async function handler(
   }
 
   const { row, column, playerId } = request.body;
+  debug("Move for ", gameId, row, column, playerId);
 
-  const game: Game | null = await kv.get(gameId);
+  const game: GameTypes.Game | null = await kv.get(gameId);
 
   if (!game) {
+    debug("Game not found");
     return response.status(404).send("Game not found");
   }
 
@@ -59,6 +68,7 @@ export default async function handler(
 
   const cell = game.state.grid[row][column];
   if (cell !== "") {
+    debug("That cell is already taken");
     return response.status(400).send("That cell is already taken");
   }
 
@@ -66,14 +76,24 @@ export default async function handler(
 
   const result = getGameResult(game.state.grid);
   if (result) {
+    debug("Game over", result);
     game.state.result = result;
     endGame(game, result);
   }
 
+  debug("updated game", game);
   kv.set(gameId, game);
 
-  const channel = await client.channels.get(gameId);
-  await channel.publish("update", game);
+  const channel = client.channels.get(gameId);
 
+  await channel.publish("update", game);
   return response.status(200).send("Success");
+
+  // channel.publish("update", game, (err) => {
+  //   if (err) {
+  //     return response.status(500).send("Error");
+  //   } else {
+  //     return response.status(200).send("Success");
+  //   }
+  // });
 }
