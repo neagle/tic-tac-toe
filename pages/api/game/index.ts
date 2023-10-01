@@ -73,30 +73,41 @@ export default async function handler(
     const currentGame = await kv.get(currentGameId);
     return response.status(200).send(JSON.stringify(currentGame));
   } else {
-    // If not, check to see if there is an open game
+    debug("Player is not in a game, let's check for an open one");
+    // If not, check to see if there is an open game -- a game whose id is
+    // stored in the `openGame` key
     const openGameId: string | null = await kv.get("openGame");
-    debug("openGameId", openGameId);
+    debug("checking for openGameId", openGameId);
 
     if (openGameId) {
+      // Get the game data for the openGameId
       const openGame: Game | null = await kv.get(openGameId);
-      debug("openGame", openGame);
+      debug("openGame data", openGame);
 
       // Check for the possibility that our state is broken and we can't find a
       // game with the id indicated in the openGame key
       if (!openGame) {
-        await kv.del(playerId);
+        debug("We can't find an actual open game, so let's clear the key");
+        await kv.del(openGameId);
         return response.status(500).send(
           JSON.stringify("Broken game state: can't find open game. Try again?"),
         );
       }
 
-      if (openGame.players[0] === playerId) {
-        // The openGame actually belongs to this player... we need to keep
-        // waiting for an opponent
-        return response.status(200).send(JSON.stringify(openGame));
-      }
+      // if (openGame.players[0] === playerId) {
+      //   // The openGame actually belongs to this player... we need to keep
+      //   // waiting for an opponent
+      //   // This check shouldn't be necessary.
+      //   debug(
+      //     "The openGame belongs to this player, so we need to keep waiting.",
+      //   );
+      //   return response.status(200).send(JSON.stringify(openGame));
+      // }
 
       // Get this game started!
+      debug(
+        "Get this game started! Add this player to the game and randomize starting player.",
+      );
       // Add this player to the game and randomize who goes first
       openGame.players = randomizeStartingPlayer(openGame.players[0], playerId);
 
@@ -111,6 +122,7 @@ export default async function handler(
 
       const client = new Ably.Rest(ABLY_API_KEY);
       const channel = await client.channels.get(openGame.id);
+      debug("Publishing update to channel", openGame.id, openGame);
 
       await channel.publish("update", openGame);
 
