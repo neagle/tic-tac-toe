@@ -3,6 +3,19 @@ import { GameTypes } from "./types";
 // Use times / circle unicode symbols for player names instead of x and o
 export const playerNames = ["×", "○"];
 
+// Convert a player ID to a player name based on its position in the players
+// array, where, in our context, the first player is always X and the second
+// player is always O
+export const playerName = (playerId: string, players: string[]) => {
+  if (playerId === players[0]) {
+    return playerNames[0];
+  } else if (playerId === players[1]) {
+    return playerNames[1];
+  } else {
+    return;
+  }
+};
+
 export const translatePlayerName = (name: string) => {
   if (name === "x") {
     return playerNames[0];
