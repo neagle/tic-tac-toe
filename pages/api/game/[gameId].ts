@@ -10,11 +10,7 @@ import { GameTypes } from "../../../src/types";
 
 const {
   ABLY_API_KEY = "",
-  DEBUG = "false",
 } = process.env;
-
-const debug = (...args: any[]) =>
-  DEBUG.toLowerCase() === "true" && console.log(...args);
 
 const client = new Ably.Rest(
   ABLY_API_KEY,
@@ -38,10 +34,7 @@ export default async function handler(
 ) {
   const { gameId } = request.query;
 
-  debug("Received a move for ", gameId);
-
   if (typeof gameId !== "string") {
-    debug("gameId is required and must be a string");
     return response.status(400).send(
       JSON.stringify("gameId is required and must be a string"),
     );
@@ -52,12 +45,10 @@ export default async function handler(
   }
 
   const { row, column, playerId } = request.body;
-  debug("Move for ", gameId, row, column, playerId);
 
   const game: GameTypes.Game | null = await kv.get(gameId);
 
   if (!game) {
-    debug("Game not found");
     return response.status(404).send("Game not found");
   }
 
@@ -68,7 +59,6 @@ export default async function handler(
 
   const cell = game.state.grid[row][column];
   if (cell !== "") {
-    debug("That cell is already taken");
     return response.status(400).send("That cell is already taken");
   }
 
@@ -76,12 +66,10 @@ export default async function handler(
 
   const result = getGameResult(game.state.grid);
   if (result) {
-    debug("Game over", result);
     game.state.result = result;
     await endGame(game, result);
   }
 
-  debug("updated game", game);
   kv.set(gameId, game);
 
   const channel = client.channels.get(gameId);

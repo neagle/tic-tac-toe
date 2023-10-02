@@ -1,21 +1,18 @@
-import { useContext, useMemo } from "react";
 import * as Ably from "ably";
-import { useChannel, usePresence } from "ably/react";
+import { useChannel } from "ably/react";
 import Grid from "./grid/Grid";
 import Chat from "./chat/Chat";
 import { useGameStateContext } from "../app";
 
 const Game = () => {
-  const { game, setGame, debug } = useGameStateContext();
+  const { game, setGame } = useGameStateContext();
 
   if (!game) return;
 
   useChannel(game.id, (message: Ably.Types.Message) => {
     const { name, data } = message;
-    debug("received message:", message);
 
     if (name === "update") {
-      debug("received update:", message);
       setGame(data);
     }
   });

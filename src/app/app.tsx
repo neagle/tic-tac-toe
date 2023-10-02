@@ -17,18 +17,12 @@ import { GameTypes } from "../types";
 import Game from "./components/Game";
 import { getGameResult, isPlayersMove } from "../gameUtils";
 
-const DEBUG = "true";
-
-const debug = (...args: any[]) =>
-  DEBUG.toLowerCase() === "true" && console.log(...args);
-
 export type GameStateContext = {
   playerId: string;
   game?: GameTypes.Game | null;
   fetchGame: (forceNewGame?: boolean) => void;
   setGame: (game: GameTypes.Game | null) => void;
   gameResult: string | null;
-  debug: (...args: any[]) => void;
   isMyMove: boolean;
 };
 
@@ -39,7 +33,6 @@ const GameContext = createContext<GameStateContext>({
   setGame: () => {},
   gameResult: null,
   isMyMove: false,
-  debug,
 });
 
 export const useGameStateContext = () => useContext(GameContext);
@@ -72,8 +65,6 @@ export default function App() {
 
   const fetchGame = useCallback(
     (forceNewGame = false) => {
-      debug(`fetch new game (force? ${forceNewGame})`);
-      // nit -- better way to change boolean to string
       fetch(
         `/api/game?playerId=${playerId}&forceNewGame=${
           forceNewGame === true ? "true" : "false"
@@ -81,11 +72,6 @@ export default function App() {
       )
         .then((gameResponse) => gameResponse.json())
         .then((currentGame) => {
-          debug("received game from server:", currentGame);
-          // if (currentGame?.id !== game?.id) {
-          //   debug("game changed, setting new game");
-          //   setGame(currentGame as Game);
-          // }
           setGame(currentGame as GameTypes.Game);
         });
     },
@@ -123,7 +109,6 @@ export default function App() {
             setGame,
             gameResult,
             isMyMove,
-            debug,
           }}
         >
           <main className="flex min-h-screen flex-col items-center p-24">
