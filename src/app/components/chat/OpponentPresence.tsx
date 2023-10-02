@@ -54,7 +54,7 @@ const OpponentStatus = () => {
   return (
     <>
       {shouldShowOpponentMessage && !opponentIsHere ? (
-        <li className="text-gray-500">Your opponent has left the game.</li>
+        <li className="text-gray-500">Your opponent has left the&nbsp;game.</li>
       ) : null}
       {shouldShowOpponentMessage && !opponentIsHere && !gameResult ? (
         <li className="mt-2">

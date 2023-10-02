@@ -1,8 +1,45 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Tic-Tac-Toe
+## Serverless Multiplayer Xs and Os with Ably, Next.JS, and Vercel
+
+Play Tic-Tac-Toe with other players online including a handy chat box with which to exchange pleasantries (and smack talk!) during your games. It's powered by a combination of Ably (for real-time pub/sub communication), Next.JS (for front-end React and a simple serverless API), and Vercel KV (Redis) for state persistence.
+
+[Play Tic-Tac-Toe on the deployed version](https://tic-tac-toe-pi-two.vercel.app/).
+
+(If you don't have anyone else to play with, you can be your own opponent by opening up the URL in a separate browser or a private/incognito window/tab.)
+
+## Dependencies
+
+To deploy your own version, you'll need a few things:
+
+* [Node.js](https://nodejs.org/)
+* An [Ably](https://ably.com) account
+* The [Next.JS CLI](https://nextjs.org/docs/getting-started/installation)
+* A [Vercel](https://vercel.com) account
+
+## Setup
+
+Armed with those dependencies, you'll need to:
+
+* Create an app in Ably for your project
+* Fork this repo and create a project in Vercel with the URL to your new repo
+* [Create a new KV Database in Vercel](https://vercel.com/docs/storage/vercel-kv/quickstart) and connect it to your project
+* Make a copy of the [env.template](https://github.com/neagle/tic-tac-toe/blob/main/env.template) file named `.env` and populate the values of those keys with the values from Ably and Vercel KV.
+
+```sh
+cp env.template .env
+```
+
+```
+ABLY_API_KEY=
+KV_URL=
+KV_REST_API_URL=
+KV_REST_API_TOKEN=
+KV_REST_API_READ_ONLY_TOKEN=
+```
 
 ## Getting Started
 
-First, run the development server:
+Once you have the prerequisites and setup, run the development server:
 
 ```bash
 npm run dev
@@ -16,11 +53,9 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
 ## Learn More
+
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 To learn more about Next.js, take a look at the following resources:
 
@@ -28,9 +63,3 @@ To learn more about Next.js, take a look at the following resources:
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
