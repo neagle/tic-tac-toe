@@ -27,9 +27,9 @@ const endGame = async (game: GameTypes.Game, result: GameTypes.GameResult) => {
     ? "It’s a draw."
     : `${translatePlayerName(result)} wins!`;
   await channel.publish("message", resultMessage);
-  kv.del(game.id);
-  kv.del(game.players[0]);
-  kv.del(game.players[1]);
+  await kv.del(game.id);
+  await kv.del(game.players[0]);
+  await kv.del(game.players[1]);
 };
 
 export default async function handler(
@@ -78,7 +78,7 @@ export default async function handler(
   if (result) {
     debug("Game over", result);
     game.state.result = result;
-    endGame(game, result);
+    await endGame(game, result);
   }
 
   debug("updated game", game);
@@ -88,12 +88,4 @@ export default async function handler(
 
   await channel.publish("update", game);
   return response.status(200).send("Success");
-
-  // channel.publish("update", game, (err) => {
-  //   if (err) {
-  //     return response.status(500).send("Error");
-  //   } else {
-  //     return response.status(200).send("Success");
-  //   }
-  // });
 }

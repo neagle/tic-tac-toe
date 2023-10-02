@@ -113,16 +113,6 @@ export default async function handler(
       debug("Publishing update to channel", openGame.id, openGame);
       await channel.publish("update", openGame);
       return response.status(200).send(JSON.stringify(openGame));
-
-      // channel.publish("update", openGame, (err) => {
-      //   if (err) {
-      //     debug("Error publishing update", err);
-      //     return response.status(500).send("Error");
-      //   } else {
-      //     debug("Success publishing update");
-      //     return response.status(200).send(JSON.stringify(openGame));
-      //   }
-      // });
     } else {
       debug("No open game found. Let's create one!");
       // No open game found. Let's create one!
