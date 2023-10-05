@@ -1,17 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as Ably from "ably";
 import { useChannel } from "ably/react";
 import { playerName, playerNames } from "../../../gameUtils";
-import { ChatTypes } from "../../../types";
-import { useGameStateContext } from "../../app";
+import * as ChatTypes from "../../../types/Chat";
+import { useAppContext } from "../../app";
 import useTypingStatus from "./useTypingStatus";
 import Status from "./Status";
 import OpponentPresence from "./OpponentPresence";
 
 const Chat = () => {
-  const { playerId, game } = useGameStateContext();
-
-  if (!game) return;
+  const { game, playerId } = useAppContext();
 
   const [messages, setMessages] = useState<ChatTypes.Message[]>([]);
 
@@ -24,6 +22,16 @@ const Chat = () => {
       ]);
     }
   });
+
+  useEffect(() => {
+    console.log("channel name has changed!", channel.name);
+    // channel.presence.enter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channel.name]);
+
+  useEffect(() => {
+    setMessages([]);
+  }, [game.id]);
 
   // Maintain a list of who is currently typing so we can indicate that in the UI
   const { onType, whoIsCurrentlyTyping } = useTypingStatus(channel, playerId);

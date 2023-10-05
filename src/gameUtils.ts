@@ -1,4 +1,23 @@
-import { GameTypes } from "./types";
+import * as GameTypes from "./types/Game";
+
+export function newGameState(): GameTypes.GameState {
+  return {
+    grid: [
+      ["", "", ""],
+      ["", "", ""],
+      ["", "", ""],
+    ],
+    result: "",
+  };
+}
+
+export const emptyGame = () => {
+  return {
+    id: "",
+    players: [],
+    state: newGameState(),
+  };
+};
 
 // Use times / circle unicode symbols for player names instead of x and o
 export const playerNames = ["×", "○"];
@@ -86,10 +105,6 @@ export const getGameResult = (grid: GameTypes.Grid) => {
 
   // If no winner or draw
   return "";
-};
-
-export const getGameResultMessage = (result: string) => {
-  const resultMessage = result === "draw" ? "It’s a draw!" : `${result} wins!`;
 };
 
 // These classes are used to position the line that indicates where the win

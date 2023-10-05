@@ -4,7 +4,7 @@ import Ably from "ably/promises";
 const { ABLY_API_KEY = "" } = process.env;
 const rest = new Ably.Rest(ABLY_API_KEY);
 
-export default async (request: NextApiRequest, response: NextApiResponse) => {
+const auth = async (request: NextApiRequest, response: NextApiResponse) => {
   const { clientId } = request.query;
 
   try {
@@ -17,3 +17,5 @@ export default async (request: NextApiRequest, response: NextApiResponse) => {
     response.status(500).send("Error requesting token: " + JSON.stringify(err));
   }
 };
+
+export default auth;

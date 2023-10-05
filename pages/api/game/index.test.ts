@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import * as Ably from "ably/promises";
 
 import handler from "./index";
@@ -71,8 +72,8 @@ describe("Game API handler", () => {
     // If you have more specific expectations (e.g., the game ID that should be set),
     // you can use something like this:
     // expect(kv.set).toHaveBeenCalledWith("expectedGameId", expect.anything());
-    expect(kv.set).toHaveBeenCalledWith("openGame", expect.anything());
     expect(kv.set).toHaveBeenCalledWith("player1", expect.anything());
+    expect(kv.set).toHaveBeenCalledWith("openGame", expect.anything());
 
     // If the response should include game details, you'd check those too.
     // This will depend on how your handler function is designed.

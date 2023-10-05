@@ -1,5 +1,5 @@
-import { useGameStateContext } from "../../app";
-import { GameTypes } from "../../../types";
+import { useAppContext } from "../../app";
+import * as GameTypes from "../../../types/Game";
 import classnames from "classnames";
 import { getGameResult, getGameResultClasses } from "../../../gameUtils";
 import { X, Y } from "./Pieces";
@@ -10,13 +10,11 @@ type GridProps = {
 
 const Grid = ({ className = "" }: GridProps) => {
   const { playerId, game, setGame, gameResult, fetchGame, isMyMove } =
-    useGameStateContext();
-
-  if (!game) return;
+    useAppContext();
 
   // If there's only one player, we're waiting for the game to begin.
   if (game.players.length < 2) {
-    return <div>Waiting for an opponent…</div>;
+    return <div>*** Waiting for an opponent…</div>;
   }
 
   // Set some shortcuts for the sake of brevity
@@ -49,6 +47,8 @@ const Grid = ({ className = "" }: GridProps) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ row, column, playerId }),
+    }).catch((error) => {
+      console.error("Error:", error);
     });
   };
 
@@ -84,12 +84,9 @@ const Grid = ({ className = "" }: GridProps) => {
       {state.result && (
         <button
           onClick={() => {
-            // This is a load-bearing setGame!
-            // Without it, usePresence doesn't seem to get reset with the new
-            // game. I don't like this mystery.
-            setGame(null);
-
-            fetchGame();
+            fetchGame(true)
+              .then(setGame)
+              .catch((error) => console.log(error));
           }}
           className="border-4 border-black p-2 hover:bg-green-500 transition-colors mb-8 sm:mb-0"
         >

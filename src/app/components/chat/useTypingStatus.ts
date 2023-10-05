@@ -22,13 +22,13 @@ const useTypingStatus = (
 
   const stopTyping = () => {
     setStartedTyping(false);
-    channel.publish("stoppedTyping", playerId);
+    void channel.publish("stoppedTyping", playerId);
   };
 
   const onType = (inputValue: string) => {
     if (!startedTyping) {
       setStartedTyping(true);
-      channel.publish("startedTyping", playerId);
+      void channel.publish("startedTyping", playerId);
     }
 
     if (timer) {
@@ -63,7 +63,7 @@ const useTypingStatus = (
       }
     };
 
-    channel.subscribe(handleAblyMessage);
+    void channel.subscribe(handleAblyMessage);
 
     return () => {
       channel.unsubscribe(handleAblyMessage);
@@ -71,7 +71,7 @@ const useTypingStatus = (
         clearTimeout(timer);
       }
     };
-  }, [channel]);
+  }, [channel, timer]);
 
   return { onType, whoIsCurrentlyTyping };
 };

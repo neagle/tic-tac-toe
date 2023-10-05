@@ -5,8 +5,8 @@ import {
   getGameResult,
   isPlayersMove,
   translatePlayerName,
-} from "../../../src/gameUtils";
-import { GameTypes } from "../../../src/types";
+} from "../../../../src/gameUtils";
+import * as GameTypes from "../../../../src/types/Game";
 
 const {
   ABLY_API_KEY = "",
@@ -17,7 +17,8 @@ const client = new Ably.Rest(
 );
 
 const endGame = async (game: GameTypes.Game, result: GameTypes.GameResult) => {
-  const channel = await client.channels.get(game.id);
+  console.log("-- endGame --", game.id, result);
+  const channel = client.channels.get(game.id);
 
   const resultMessage = result === "draw"
     ? "It’s a draw."
@@ -32,6 +33,7 @@ export default async function handler(
   request: NextApiRequest,
   response: NextApiResponse,
 ) {
+  console.log("-- MOVE --");
   const { gameId } = request.query;
 
   if (typeof gameId !== "string") {
@@ -70,7 +72,7 @@ export default async function handler(
     await endGame(game, result);
   }
 
-  kv.set(gameId, game);
+  await kv.set(gameId, game);
 
   const channel = client.channels.get(gameId);
 

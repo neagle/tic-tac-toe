@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 interface MockKV {
   get: jest.Mock;
   set: jest.Mock;
@@ -9,6 +10,7 @@ export const kv: MockKV = {
   data: {},
   get: jest.fn(async (key) => kv.data[key]),
   set: jest.fn(async (key, value) => {
+    console.log("mocked set", key, value);
     kv.data[key] = value;
   }),
   del: jest.fn(async (key) => {

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useGameStateContext } from "../../app";
+import { useAppContext } from "../../app";
 import { playerName } from "../../../gameUtils";
 
 type StatusProps = {
@@ -13,8 +13,7 @@ const Status = ({
   defaultText = "Chat",
   className = "",
 }: StatusProps) => {
-  const { game, playerId } = useGameStateContext();
-  if (!game) return;
+  const { game, playerId } = useAppContext();
 
   // whoIsCurrentlyTyping tracks both players, but we only care about showing if
   // the opponent is currently typing.
