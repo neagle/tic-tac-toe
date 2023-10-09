@@ -24,12 +24,6 @@ const Chat = () => {
   });
 
   useEffect(() => {
-    console.log("channel name has changed!", channel.name);
-    // channel.presence.enter();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channel.name]);
-
-  useEffect(() => {
     setMessages([]);
   }, [game.id]);
 

@@ -14,7 +14,7 @@ const Grid = ({ className = "" }: GridProps) => {
 
   // If there's only one player, we're waiting for the game to begin.
   if (game.players.length < 2) {
-    return <div>*** Waiting for an opponent…</div>;
+    return <div>Waiting for an opponent…</div>;
   }
 
   // Set some shortcuts for the sake of brevity

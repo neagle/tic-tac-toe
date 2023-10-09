@@ -10,34 +10,33 @@ import { getGameResult, emptyGame, isPlayersMove } from "../gameUtils";
 
 const PLAYER_ID = "tic-tac-toe-playerId";
 let playerId: string = localStorage.getItem(PLAYER_ID) || "";
-console.log("player id (from localstorage)", playerId);
 if (!playerId || typeof playerId !== "string") {
   playerId = uuid();
   localStorage.setItem(PLAYER_ID, playerId);
 }
-console.log("PLAYER ID:", playerId);
+
+// Create an Ably client
+const client = new Ably.Realtime.Promise({
+  authUrl: "/api/ably/auth",
+  clientId: playerId,
+});
 
 let isFetchingGame = false;
 let fetchedGame = emptyGame();
 
 const fetchGame = async (forceNewGame = false) => {
-  console.log("isFetchingGame??", isFetchingGame);
-
   if (isFetchingGame) {
-    console.log("already in the works", fetchedGame);
     return fetchedGame;
   }
 
   isFetchingGame = true;
 
-  console.log("fire off fetch");
   const response = await fetch(
     `/api/game?playerId=${playerId}&forceNewGame=${
       forceNewGame === true ? "true" : "false"
     }`
   );
   fetchedGame = await response.json();
-  console.log("game returned by fetchGame", fetchedGame);
 
   isFetchingGame = false;
   return fetchedGame;
@@ -70,12 +69,6 @@ export default function App() {
 
   // const [playerId] = useSafeLocalStorage<string>("playerId", uuid(), "string");
 
-  // Create an Ably client
-  const client = new Ably.Realtime.Promise({
-    authUrl: "/api/ably/auth",
-    clientId: playerId,
-  });
-
   const [game, setGame] = useState<GameTypes.Game>(emptyGame);
 
   // Fetch a game on mount
@@ -86,29 +79,6 @@ export default function App() {
       })
       .catch((error) => console.log(error));
   }, []);
-
-  // const fetchGame = useCallback(
-  //   (forceNewGame = false) => {
-  //     fetch(
-  //       `/api/game?playerId=${playerId}&forceNewGame=${
-  //         forceNewGame === true ? "true" : "false"
-  //       }`
-  //     )
-  //       .then((gameResponse) => gameResponse.json())
-  //       .then((currentGame) => {
-  //         setGame(currentGame as GameTypes.Game);
-  //       })
-  //       .catch((error) => {
-  //         console.error("Error fetching game:", error);
-  //       });
-  //   },
-  //   [playerId, setGame]
-  // );
-
-  // Once we have a playerId (or if it changes for some reason) fetch a game for
-  // the user from the server. If the player has one going, it will resume the
-  // game. If they don't, it will create a new one.
-  // useConditionalEffect(fetchGame, [playerId]);
 
   // The result of the game, if it's been concluded.
   const gameResult = useMemo(() => {

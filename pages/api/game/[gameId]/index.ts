@@ -17,7 +17,6 @@ const client = new Ably.Rest(
 );
 
 const endGame = async (game: GameTypes.Game, result: GameTypes.GameResult) => {
-  console.log("-- endGame --", game.id, result);
   const channel = client.channels.get(game.id);
 
   const resultMessage = result === "draw"
@@ -33,7 +32,6 @@ export default async function handler(
   request: NextApiRequest,
   response: NextApiResponse,
 ) {
-  console.log("-- MOVE --");
   const { gameId } = request.query;
 
   if (typeof gameId !== "string") {

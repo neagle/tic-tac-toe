@@ -13,9 +13,9 @@ function randomizeStartingPlayer(player1: string, player2: string) {
 }
 
 async function eraseGame(currentGameId: string) {
-  console.log("-- erase game", currentGameId);
   const currentGame: GameTypes.Game | null = await kv.get(currentGameId);
   if (currentGame) {
+    // Remove the game from the attached players
     currentGame.players.forEach(async (playerId) => await kv.del(playerId));
   }
 
@@ -30,7 +30,6 @@ async function eraseGame(currentGameId: string) {
 
 // Create a new game and set it as the open game
 async function createNewGame(playerId: string) {
-  console.log("++ createNewGame", playerId);
   const newGameId = String(+new Date());
 
   // Declare this game open for another player to join
@@ -46,8 +45,6 @@ async function createNewGame(playerId: string) {
   await kv.set(newGameId, newGame);
 
   // Store the fact that this player is in this game
-  console.log("playerId", playerId);
-  console.log("newGameId", newGameId);
   await kv.set(playerId, newGameId);
 
   return newGame;
@@ -58,7 +55,6 @@ async function startOpenGame(
   playerId: string,
   channel: Ably.Types.ChannelPromise,
 ) {
-  console.log("++ startOpenGame", openGame, playerId, channel);
   // Get this game started!
   // Add this player to the game and randomize who goes first
   openGame.players = randomizeStartingPlayer(openGame.players[0], playerId);
@@ -80,7 +76,6 @@ export default async function handler(
   response: NextApiResponse,
 ) {
   const { playerId, forceNewGame = false } = request.query;
-  console.log("-- FETCH GAME -- playerId", playerId);
 
   if (typeof playerId !== "string") {
     response.status(400).send(
@@ -102,9 +97,7 @@ export default async function handler(
 
   // Check if this player is in a game
   if (currentGameId) {
-    console.log("-- current game id, return the game  --", currentGameId);
     const currentGame = await kv.get(currentGameId);
-    console.log("currentGame", currentGame);
     if (!currentGame) {
       await kv.del(currentGameId);
       const newGame = await createNewGame(playerId);
@@ -112,20 +105,13 @@ export default async function handler(
     }
     return response.status(200).send(JSON.stringify(currentGame));
   } else {
-    console.log("-- no current game, check for a new one --");
     // If not, check to see if there is an open game -- a game whose id is
     // stored in the `openGame` key
     const openGameId: string | null = await kv.get("openGame");
-    console.log("open game?", openGameId);
 
     if (openGameId) {
-      console.log(
-        "-- open game id, join the game --",
-        openGameId,
-      );
       // Get the game data for the openGameId
       const openGame: GameTypes.Game | null = await kv.get(openGameId);
-      console.log("openGame", openGame);
 
       // Check for the possibility that our state is broken and we can't find a
       // game with the id indicated in the openGame key
@@ -142,17 +128,11 @@ export default async function handler(
       // Check Ably's presence API to see if the player who created the open
       // game is still there
       const presentPlayers = await channel.presence.get();
-      console.log("presentPlayers", presentPlayers);
-      // const noPlayerActuallyPresent = !presentPlayers?.items?.length;
-      const noPlayerActuallyPresent = false;
-      console.log("noPlayerActuallyPresent", noPlayerActuallyPresent);
+      const noPlayerActuallyPresent = !presentPlayers?.items?.length;
 
       if (noPlayerActuallyPresent) {
         // The open game seems to have been abandoned
-
-        // Delete the game and the openGame key
-        await kv.del(openGameId);
-        await kv.del("openGame");
+        await eraseGame(openGameId);
 
         // Create a new game
         const newGame = await createNewGame(playerId);

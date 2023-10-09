@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import * as Ably from "ably";
-import { useChannel, usePresence } from "ably/react";
+import { useChannel } from "ably/react";
 import Grid from "./grid/Grid";
 import Chat from "./chat/Chat";
 import { useAppContext } from "../app";
@@ -21,15 +21,8 @@ export const useGameContext = () => useContext(GameContext);
 const Game = () => {
   const { game, playerId, setGame } = useAppContext();
 
-  useEffect(() => {
-    console.log("Game component mount", game.id);
-    return () => {
-      console.log("Game component unmount", game.id);
-    };
-  }, [game.id]);
-
   // Subscribe to updates from the game channel
-  useChannel(game.id, (message: Ably.Types.Message) => {
+  const { channel } = useChannel(game.id, (message: Ably.Types.Message) => {
     const { name, data } = message;
 
     if (name === "update") {
@@ -37,7 +30,57 @@ const Game = () => {
     }
   });
 
-  const { presenceData } = usePresence(game.id, "present");
+  const [presentInChannel, setPresentInChannel] = useState<string[]>([]);
+  const addToPresentInChannel = (id: string) => {
+    setPresentInChannel((presentInChannel) => {
+      return !presentInChannel.includes(id)
+        ? [...presentInChannel, id]
+        : presentInChannel;
+    });
+  };
+
+  const removeFromPresentInChannel = (id: string) => {
+    setPresentInChannel((currentPresent) =>
+      currentPresent.filter((clientId) => clientId !== id)
+    );
+  };
+
+  useEffect(() => {
+    // Get the initial list of who is present in the channel
+    channel.presence
+      .get()
+      .then((presenceData: Ably.Types.PresenceMessage[]) => {
+        presenceData.forEach((presence: Ably.Types.PresenceMessage) => {
+          addToPresentInChannel(presence.clientId);
+        });
+      })
+      .catch((error: Error) => {
+        console.log("error getting presence data", error);
+      });
+
+    // Enter the channel
+    channel.presence.enter("present");
+
+    // Subscribe to enter/leave
+    channel.presence.subscribe(
+      "enter",
+      (presence: Ably.Types.PresenceMessage) =>
+        addToPresentInChannel(presence.clientId)
+    );
+    channel.presence.subscribe(
+      "leave",
+      (presence: Ably.Types.PresenceMessage) =>
+        removeFromPresentInChannel(presence.clientId)
+    );
+    return () => {
+      // Leave the channel
+      channel.presence.leave();
+
+      // Clean up subscriptions
+      channel.presence.unsubscribe("enter");
+      channel.presence.unsubscribe("leave");
+    };
+  }, [channel.name]);
 
   const opponentId = useMemo(
     () => game.players.filter((id) => id !== playerId)[0],
@@ -45,11 +88,10 @@ const Game = () => {
   );
 
   const opponentIsPresent = useMemo(() => {
-    console.log("presenceData (from usememo)", presenceData);
     return Boolean(
-      presenceData.find((presence) => presence.clientId === opponentId)
+      presentInChannel.find((clientId) => clientId === opponentId)
     );
-  }, [presenceData, opponentId]);
+  }, [presentInChannel, opponentId]);
 
   return (
     <GameContext.Provider value={{ opponentId, opponentIsPresent }}>

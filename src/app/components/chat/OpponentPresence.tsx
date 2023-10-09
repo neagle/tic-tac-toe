@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-// import { usePresence } from "ably/react";
-// import { usePresence } from "../../../../node_modules/ably/src/platform/react-hooks/src/hooks/usePresence";
 import { useAppContext } from "../../app";
 import { useGameContext } from "../Game";
 
@@ -9,15 +7,8 @@ import { useGameContext } from "../Game";
 // abandoned an in-progress game.
 
 const OpponentStatus = () => {
-  const { game, gameResult, fetchGame, setGame } = useAppContext();
+  const { gameResult, fetchGame, setGame } = useAppContext();
   const { opponentIsPresent } = useGameContext();
-
-  useEffect(() => {
-    console.log("OpponentStatus component mount", game.id);
-    return () => {
-      console.log("OpponentStatus component unmount", game.id);
-    };
-  }, [game.id]);
 
   const [shouldShowOpponentMessage, setShouldShowOpponentMessage] =
     useState(false);
