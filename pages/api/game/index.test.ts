@@ -7,8 +7,17 @@ import { kv } from "@vercel/kv";
 
 // Provide mocking for Ably
 const mockPublish = jest.fn().mockImplementation(() => Promise.resolve());
+const mockPresenceGet = jest.fn();
+const setMockPresenceGetReturnItems = (items: any[]) => {
+  mockPresenceGet.mockImplementation(() => Promise.resolve({ items }));
+};
+
 const mockGetChannel = jest.fn().mockImplementation(() => {
-  return { publish: mockPublish };
+  const presence = {
+    get: mockPresenceGet,
+  };
+
+  return { publish: mockPublish, presence };
 });
 
 jest.mock("ably/promises", () => {
@@ -93,6 +102,8 @@ describe("Game API handler", () => {
     req1.query.playerId = "player1";
     await handler(req1, res1);
 
+    setMockPresenceGetReturnItems(["player1"]);
+
     const req2 = req();
     const res2 = res();
     req2.query.playerId = "player2";
@@ -105,9 +116,30 @@ describe("Game API handler", () => {
     // expect p2 to include both player1 and player 2, but not to expect a certain order
     expect(p2.players).toContain("player1");
     expect(p2.players).toContain("player2");
+  });
 
-    // expect(p2).toMatchObject({
-    //   players: ["player1", "player2"],
-    // });
+  test("should start a new game if an open game, but it's abandoned", async () => {
+    const req1 = req();
+    const res1 = res();
+    req1.query.playerId = "player1";
+    await handler(req1, res1);
+
+    const p1 = getParsedSendArg(
+      (res1.send as jest.MockedFunction<any>).mock.calls,
+    );
+
+    // Simulate player 1 creating, but then abandoning the game
+    setMockPresenceGetReturnItems([]);
+
+    const req2 = req();
+    const res2 = res();
+    req2.query.playerId = "player2";
+    await handler(req2, res2);
+
+    const p2 = getParsedSendArg(
+      (res2.send as jest.MockedFunction<any>).mock.calls,
+    );
+
+    expect(p1.id).not.toEqual(p2.id);
   });
 });
