@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Ably from "ably/promises";
+import * as Ably from "ably/promises";
 
 // This hook is used to track which players are currently typing in a chat
 // Example Usage:
