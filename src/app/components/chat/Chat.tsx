@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import * as Ably from "ably";
+import classnames from "classnames";
 import { useChannel } from "ably/react";
 import { playerName, playerNames } from "../../../gameUtils";
 import * as ChatTypes from "../../../types/Chat";
@@ -7,19 +8,32 @@ import { useAppContext } from "../../app";
 import useTypingStatus from "./useTypingStatus";
 import Status from "./Status";
 import OpponentPresence from "./OpponentPresence";
+import CreateReaction from "./CreateReaction";
+import DisplayReaction from "./DisplayReaction";
 
 const Chat = () => {
   const { game, playerId } = useAppContext();
 
   const [messages, setMessages] = useState<ChatTypes.Message[]>([]);
+  const [reactions, setReactions] = useState<
+    Record<string, Ably.Types.Message>
+  >({});
 
   const { channel } = useChannel(game.id, (message: Ably.Types.Message) => {
-    const { name, clientId, data: text, timestamp, id } = message;
+    const { name, clientId, data, timestamp, id } = message;
     if (name === "message") {
       setMessages((messages) => [
         ...messages,
-        { clientId, text, timestamp, id },
+        { clientId, text: data, timestamp, id },
       ]);
+    }
+
+    if (name === "reaction") {
+      setReactions((reactions) => {
+        const newReactions = { ...reactions };
+        newReactions[data.extras.reference.timeserial] = message;
+        return newReactions;
+      });
     }
   });
 
@@ -68,15 +82,30 @@ const Chat = () => {
             );
           } else {
             return (
-              <li key={message.id}>
+              <li key={message.id} className="group/message">
                 <b
-                  className={`${
-                    name === playerNames[0] ? "text-orange-400" : ""
-                  } ${name === playerNames[1] ? "text-green-600" : ""}`}
+                  className={classnames({
+                    "text-orange-400": name === playerNames[0],
+                    "text-green-600": name === playerNames[1],
+                  })}
                 >
                   {name}:
                 </b>{" "}
                 {message.text}
+                {message.clientId !== playerId && (
+                  <CreateReaction
+                    channel={channel}
+                    message={message}
+                    className={classnames([
+                      "opacity-0",
+                      "group-hover/message:opacity-100",
+                      "transition-opacity",
+                    ])}
+                  />
+                )}
+                {reactions[message.id] && (
+                  <DisplayReaction reaction={reactions[message.id]} />
+                )}
               </li>
             );
           }
