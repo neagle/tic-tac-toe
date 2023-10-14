@@ -1,28 +1,55 @@
 import * as Ably from "ably";
 import * as ChatTypes from "../../../types/Chat";
 import classnames from "classnames";
+import { useAppContext } from "../../app";
 
 type ReactionProps = {
   channel: Ably.Types.RealtimeChannelPromise;
   message: ChatTypes.Message;
+  reactions: Ably.Types.Message[];
   className?: string;
 };
 
 const EMOJIS = ["🤘", "🤪", "😡", "😂", "😭"];
 
-const Reaction = ({ channel, message, className = "" }: ReactionProps) => {
+const Reaction = ({
+  channel,
+  message,
+  reactions,
+  className = "",
+}: ReactionProps) => {
+  const { playerId } = useAppContext();
+
   const handleReactionClick = async (
     event: React.MouseEvent<HTMLAnchorElement>
   ) => {
     if (event.target instanceof HTMLAnchorElement) {
       const emoji = event.target.textContent;
-      await channel.publish("reaction", {
-        body: emoji,
-        extras: {
-          reference: { type: "com.ably.reaction", timeserial: message.id },
-        },
-      });
+      if (!emoji) return;
+      if (alreadyReacted(emoji)) {
+        await channel.publish("remove-reaction", {
+          body: emoji,
+          extras: {
+            reference: { type: "com.ably.reaction", timeserial: message.id },
+          },
+        });
+      } else {
+        await channel.publish("add-reaction", {
+          body: emoji,
+          extras: {
+            reference: { type: "com.ably.reaction", timeserial: message.id },
+          },
+        });
+      }
     }
+  };
+
+  const alreadyReacted = (emoji: string) => {
+    return reactions?.length
+      ? reactions
+          .filter((reaction) => reaction.clientId === playerId)
+          .find((reaction) => reaction.data.body === emoji)
+      : false;
   };
 
   return (
@@ -52,7 +79,23 @@ const Reaction = ({ channel, message, className = "" }: ReactionProps) => {
             <li key={emoji} className="inline-block">
               <a
                 onClick={handleReactionClick}
-                className="cursor-pointer inline-block text-2xl p-1 pt-0 origin-center scale-75 hover:scale-100 transition-transform"
+                className={classnames(
+                  {
+                    "bg-green-500": alreadyReacted(emoji),
+                  },
+                  [
+                    "rounded-full",
+                    "cursor-pointer",
+                    "inline-block",
+                    "text-2xl",
+                    "p-1",
+                    "pt-0",
+                    "origin-center",
+                    "scale-75",
+                    "hover:scale-100",
+                    "transition-transform",
+                  ]
+                )}
               >
                 {emoji}
               </a>
