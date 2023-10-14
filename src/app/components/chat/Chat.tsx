@@ -9,17 +9,17 @@ import useTypingStatus from "./useTypingStatus";
 import Status from "./Status";
 import OpponentPresence from "./OpponentPresence";
 import CreateReaction from "./CreateReaction";
-import DisplayReaction from "./DisplayReaction";
+import DisplayReactions from "./DisplayReactions";
 
 const Chat = () => {
   const { game, playerId } = useAppContext();
 
   const [messages, setMessages] = useState<ChatTypes.Message[]>([]);
   const [reactions, setReactions] = useState<
-    Record<string, Ably.Types.Message>
+    Record<string, Ably.Types.Message[]>
   >({});
 
-  const { channel } = useChannel(game.id, (message: Ably.Types.Message) => {
+  const onMessage = (message: Ably.Types.Message) => {
     const { name, clientId, data, timestamp, id } = message;
     if (name === "message") {
       setMessages((messages) => [
@@ -28,14 +28,38 @@ const Chat = () => {
       ]);
     }
 
-    if (name === "reaction") {
+    if (name === "add-reaction") {
       setReactions((reactions) => {
         const newReactions = { ...reactions };
-        newReactions[data.extras.reference.timeserial] = message;
+        const key = data.extras.reference.timeserial;
+
+        // Create a new array if it doesn't exist
+        if (!newReactions[key]) {
+          newReactions[key] = [];
+        }
+
+        // Prevent duplicates
+        if (!newReactions[key].find((reaction) => reaction.id === id)) {
+          newReactions[key].push(message);
+        }
+
         return newReactions;
       });
     }
-  });
+
+    if (name === "remove-reaction") {
+      setReactions((reactions) => {
+        const newReactions = { ...reactions };
+        const key = data.extras.reference.timeserial;
+        newReactions[key] = newReactions[key]?.filter(
+          (reaction) => reaction.data.body !== data.body
+        );
+        return newReactions;
+      });
+    }
+  };
+
+  const { channel } = useChannel(`[?rewind=100]${game.id}`, onMessage);
 
   useEffect(() => {
     setMessages([]);
@@ -84,10 +108,13 @@ const Chat = () => {
             return (
               <li key={message.id} className="group/message">
                 <b
-                  className={classnames({
-                    "text-orange-400": name === playerNames[0],
-                    "text-green-600": name === playerNames[1],
-                  })}
+                  className={classnames(
+                    {
+                      "text-orange-400": name === playerNames[0],
+                      "text-green-600": name === playerNames[1],
+                    },
+                    ["font-mono"]
+                  )}
                 >
                   {name}:
                 </b>{" "}
@@ -96,6 +123,7 @@ const Chat = () => {
                   <CreateReaction
                     channel={channel}
                     message={message}
+                    reactions={reactions[message.id]}
                     className={classnames([
                       "opacity-0",
                       "group-hover/message:opacity-100",
@@ -104,7 +132,7 @@ const Chat = () => {
                   />
                 )}
                 {reactions[message.id] && (
-                  <DisplayReaction reaction={reactions[message.id]} />
+                  <DisplayReactions reactions={reactions[message.id]} />
                 )}
               </li>
             );

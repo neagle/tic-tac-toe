@@ -20,7 +20,7 @@ export const emptyGame = () => {
 };
 
 // Use times / circle unicode symbols for player names instead of x and o
-export const playerNames = ["×", "○"];
+export const playerNames = ["x", "o"];
 
 // Convert a player ID to a player name based on its position in the players
 // array, where, in our context, the first player is always X and the second
