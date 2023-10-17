@@ -125,22 +125,8 @@ export default async function handler(
       const client = new Ably.Rest(ABLY_API_KEY);
       const channel = client.channels.get(openGame.id);
 
-      // Check Ably's presence API to see if the player who created the open
-      // game is still there
-      const presentPlayers = await channel.presence.get();
-      const noPlayerActuallyPresent = !presentPlayers?.items?.length;
-
-      if (noPlayerActuallyPresent) {
-        // The open game seems to have been abandoned
-        await eraseGame(openGameId);
-
-        // Create a new game
-        const newGame = await createNewGame(playerId);
-        return response.status(200).send(JSON.stringify(newGame));
-      } else {
-        await startOpenGame(openGame, playerId, channel);
-        return response.status(200).send(JSON.stringify(openGame));
-      }
+      await startOpenGame(openGame, playerId, channel);
+      return response.status(200).send(JSON.stringify(openGame));
     } else {
       const newGame = await createNewGame(playerId);
       return response.status(200).send(JSON.stringify(newGame));

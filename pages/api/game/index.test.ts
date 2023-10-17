@@ -117,29 +117,4 @@ describe("Game API handler", () => {
     expect(p2.players).toContain("player1");
     expect(p2.players).toContain("player2");
   });
-
-  test("should start a new game if an open game, but it's abandoned", async () => {
-    const req1 = req();
-    const res1 = res();
-    req1.query.playerId = "player1";
-    await handler(req1, res1);
-
-    const p1 = getParsedSendArg(
-      (res1.send as jest.MockedFunction<any>).mock.calls,
-    );
-
-    // Simulate player 1 creating, but then abandoning the game
-    setMockPresenceGetReturnItems([]);
-
-    const req2 = req();
-    const res2 = res();
-    req2.query.playerId = "player2";
-    await handler(req2, res2);
-
-    const p2 = getParsedSendArg(
-      (res2.send as jest.MockedFunction<any>).mock.calls,
-    );
-
-    expect(p1.id).not.toEqual(p2.id);
-  });
 });
