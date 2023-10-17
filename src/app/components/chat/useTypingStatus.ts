@@ -22,13 +22,14 @@ const useTypingStatus = (
 
   const stopTyping = () => {
     setStartedTyping(false);
-    void channel.publish("stoppedTyping", playerId);
+    void channel.presence.update("");
   };
 
   const onType = (inputValue: string) => {
     if (!startedTyping) {
       setStartedTyping(true);
       void channel.publish("startedTyping", playerId);
+      void channel.presence.update("typing");
     }
 
     if (timer) {
@@ -46,27 +47,30 @@ const useTypingStatus = (
   };
 
   useEffect(() => {
-    const handleAblyMessage = (message: Ably.Types.Message) => {
-      const { name, clientId } = message;
+    const handlePresenceUpdate = (
+      update: Ably.Types.PresenceMessage,
+    ) => {
+      const { data, clientId } = update;
 
-      if (name === "startedTyping") {
+      if (data === "typing") {
         setWhoIsCurrentlyTyping((currentlyTyping) => [
           ...currentlyTyping,
           clientId,
         ]);
-      }
-
-      if (name === "stoppedTyping") {
+      } else {
         setWhoIsCurrentlyTyping((currentlyTyping) =>
           currentlyTyping.filter((id) => id !== clientId)
         );
       }
     };
 
-    void channel.subscribe(handleAblyMessage);
+    void channel.presence.subscribe(
+      "update",
+      handlePresenceUpdate,
+    );
 
     return () => {
-      channel.unsubscribe(handleAblyMessage);
+      channel.presence.unsubscribe("update");
       if (timer) {
         clearTimeout(timer);
       }
