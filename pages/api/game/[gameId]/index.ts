@@ -17,7 +17,7 @@ const client = new Ably.Rest(
 );
 
 const endGame = async (game: GameTypes.Game, result: GameTypes.GameResult) => {
-  const channel = client.channels.get(game.id);
+  const channel = client.channels.get(`game:${game.id}`);
 
   const resultMessage = result === "draw"
     ? "It’s a draw."

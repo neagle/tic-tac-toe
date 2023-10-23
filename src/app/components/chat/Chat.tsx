@@ -59,7 +59,7 @@ const Chat = () => {
     }
   };
 
-  const { channel } = useChannel(`[?rewind=100]${game.id}`, onMessage);
+  const { channel } = useChannel(`[?rewind=100]game:${game.id}`, onMessage);
 
   useEffect(() => {
     setMessages([]);

@@ -123,7 +123,7 @@ export default async function handler(
       }
 
       const client = new Ably.Rest(ABLY_API_KEY);
-      const channel = client.channels.get(openGame.id);
+      const channel = client.channels.get(`game:${openGame.id}`);
 
       // Check Ably's presence API to see if the player who created the open
       // game is still there

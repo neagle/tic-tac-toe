@@ -23,13 +23,16 @@ const Game = () => {
   const { game, playerId, setGame } = useAppContext();
 
   // Subscribe to updates from the game channel
-  const { channel } = useChannel(game.id, (message: Ably.Types.Message) => {
-    const { name, data } = message;
+  const { channel } = useChannel(
+    `game:${game.id}`,
+    (message: Ably.Types.Message) => {
+      const { name, data } = message;
 
-    if (name === "update") {
-      setGame(data);
+      if (name === "update") {
+        setGame(data);
+      }
     }
-  });
+  );
 
   const { presentInChannel } = usePresence(channel);
 
