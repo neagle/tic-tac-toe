@@ -5,9 +5,11 @@ import * as ChatTypes from "../../../types/Chat";
 import * as Ably from "ably/promises";
 import { playerName, playerNames } from "../../../gameUtils";
 import classnames from "classnames";
+import useTypingStatus from "./useTypingStatus";
+import Status from "./Status";
 
 const Chat = () => {
-  const { game } = useAppContext();
+  const { game, playerId } = useAppContext();
 
   const [messages, setMessages] = useState<ChatTypes.Message[]>([]);
 
@@ -28,17 +30,24 @@ const Chat = () => {
     setMessages([]);
   }, [game.id]);
 
+  // Maintain a list of who is currently typing so we can indicate that in the UI
+  const { onType, whoIsCurrentlyTyping } = useTypingStatus(channel, playerId);
+
   // State for the chat text input
   const [inputValue, setInputValue] = useState<string>("");
 
   const onSend = () => {
     channel.publish("message", inputValue);
+    // When a message is sent, we want to turn off the typing indicator
+    // immediately.
+    onType("");
     setInputValue("");
   };
 
   const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const text = event.target.value;
     setInputValue(text);
+    onType(text);
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -80,6 +89,10 @@ const Chat = () => {
           }
         })}
       </ul>
+      <Status
+        whoIsCurrentlyTyping={whoIsCurrentlyTyping}
+        className="p-2 text-xs text-gray-500"
+      />
       <div className="flex">
         <input
           className="grow p-2 focus:outline outline-4 outline-red-500"

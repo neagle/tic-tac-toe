@@ -123,7 +123,7 @@ export default async function handler(
       }
 
       const client = new Ably.Rest(ABLY_API_KEY);
-      const channel = client.channels.get(openGame.id);
+      const channel = client.channels.get(`game:${openGame.id}`);
 
       await startOpenGame(openGame, playerId, channel);
       return response.status(200).send(JSON.stringify(openGame));

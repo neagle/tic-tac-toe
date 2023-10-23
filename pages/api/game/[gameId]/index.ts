@@ -17,7 +17,7 @@ const client = new Ably.Rest(
 );
 
 const endGame = async (game: GameTypes.Game, result: GameTypes.GameResult) => {
-  const channel = client.channels.get(game.id);
+  const channel = client.channels.get(`game:${game.id}`);
 
   const resultMessage = result === "draw"
     ? "It’s a draw."
@@ -72,7 +72,7 @@ export default async function handler(
 
   await kv.set(gameId, game);
 
-  const channel = client.channels.get(gameId);
+  const channel = client.channels.get(`game:${gameId}`);
 
   await channel.publish("update", game);
   return response.status(200).send("Success");
