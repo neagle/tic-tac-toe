@@ -1,7 +1,6 @@
 import { createContext, useContext, useMemo } from "react";
 import * as Ably from "ably";
-import { useChannel } from "ably/react";
-import usePresence from "./usePresence";
+import { useChannel, usePresence } from "ably/react";
 import Grid from "./grid/Grid";
 import Chat from "./chat/Chat";
 import { useAppContext } from "../app";
@@ -23,18 +22,16 @@ const Game = () => {
   const { game, playerId, setGame } = useAppContext();
 
   // Subscribe to updates from the game channel
-  const { channel } = useChannel(
-    `game:${game.id}`,
-    (message: Ably.Types.Message) => {
-      const { name, data } = message;
+  useChannel(`game:${game.id}`, (message: Ably.Types.Message) => {
+    const { name, data } = message;
 
-      if (name === "update") {
-        setGame(data);
-      }
+    if (name === "update") {
+      setGame(data);
     }
-  );
+  });
 
-  const { presentInChannel } = usePresence(channel);
+  const { presenceData } = usePresence<string>(`game:${game.id}`);
+  const presentInChannel = presenceData.map((p) => p.clientId);
 
   const opponentId = useMemo(
     () => game.players.filter((id) => id !== playerId)[0],
