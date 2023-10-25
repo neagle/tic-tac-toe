@@ -7,6 +7,7 @@ import { playerName, playerNames } from "../../../gameUtils";
 import classnames from "classnames";
 import useTypingStatus from "./useTypingStatus";
 import Status from "./Status";
+import OpponentPresence from "./OpponentPresence";
 
 const Chat = () => {
   const { game, playerId } = useAppContext();
@@ -88,6 +89,7 @@ const Chat = () => {
             );
           }
         })}
+        <OpponentPresence />
       </ul>
       <Status
         whoIsCurrentlyTyping={whoIsCurrentlyTyping}
