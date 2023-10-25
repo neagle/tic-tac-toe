@@ -1,17 +1,19 @@
 import { createContext, useContext, useMemo } from "react";
 import * as Ably from "ably";
-import { useChannel } from "ably/react";
+import { useChannel, usePresence } from "ably/react";
 import Grid from "./grid/Grid";
 import Chat from "./chat/Chat";
 import { useAppContext } from "../app";
 
 type GameContext = {
   opponentId: string;
+  opponentIsPresent: boolean;
 };
 
 const GameContext = createContext<GameContext>({
   // Set defaults
   opponentId: "",
+  opponentIsPresent: false,
 });
 
 export const useGameContext = () => useContext(GameContext);
@@ -33,8 +35,14 @@ const Game = () => {
     [game.players, playerId]
   );
 
+  const { presenceData } = usePresence(`game:${game.id}`);
+  const opponentIsPresent = useMemo(
+    () => Boolean(presenceData.find((p) => p.clientId === opponentId)),
+    [presenceData, opponentId]
+  );
+
   return (
-    <GameContext.Provider value={{ opponentId }}>
+    <GameContext.Provider value={{ opponentId, opponentIsPresent }}>
       <div className="flex flex-col sm:flex-row">
         <div className="text-center">
           <Grid />

@@ -7,11 +7,17 @@ import { playerName, playerNames } from "../../../gameUtils";
 import classnames from "classnames";
 import useTypingStatus from "./useTypingStatus";
 import Status from "./Status";
+import OpponentPresence from "./OpponentPresence";
+import DisplayReactions from "./DisplayReactions";
+import CreateReaction from "./CreateReaction";
 
 const Chat = () => {
   const { game, playerId } = useAppContext();
 
   const [messages, setMessages] = useState<ChatTypes.Message[]>([]);
+  const [reactions, setReactions] = useState<
+    Record<string, Ably.Types.Message[]>
+  >({});
 
   const onMessage = (message: Ably.Types.Message) => {
     const { name, clientId, data, timestamp, id } = message;
@@ -20,6 +26,36 @@ const Chat = () => {
         ...messages,
         { clientId, text: data, timestamp, id },
       ]);
+    }
+
+    if (name === "add-reaction") {
+      setReactions((reactions) => {
+        const newReactions = { ...reactions };
+        const key = data.extras.reference.timeserial;
+
+        // Create a new array if it doesn't exist
+        if (!newReactions[key]) {
+          newReactions[key] = [];
+        }
+
+        // Prevent duplicates
+        if (!newReactions[key].find((reaction) => reaction.id === id)) {
+          newReactions[key].push(message);
+        }
+
+        return newReactions;
+      });
+    }
+
+    if (name === "remove-reaction") {
+      setReactions((reactions) => {
+        const newReactions = { ...reactions };
+        const key = data.extras.reference.timeserial;
+        newReactions[key] = newReactions[key]?.filter(
+          (reaction) => reaction.data.body !== data.body
+        );
+        return newReactions;
+      });
     }
   };
 
@@ -56,6 +92,8 @@ const Chat = () => {
     }
   };
 
+  console.log("game.id", game.id);
+
   return (
     <div className="flex flex-col h-full">
       <ul className="p-2 grow bg-white min-h-[200px] sm:min-h-0">
@@ -84,10 +122,26 @@ const Chat = () => {
                   {name}:
                 </b>{" "}
                 {message.text}
+                {message.clientId !== playerId && (
+                  <CreateReaction
+                    channel={channel}
+                    message={message}
+                    reactions={reactions[message.id]}
+                    className={classnames([
+                      "opacity-0",
+                      "group-hover/message:opacity-100",
+                      "transition-opacity",
+                    ])}
+                  />
+                )}
+                {reactions[message.id] && (
+                  <DisplayReactions reactions={reactions[message.id]} />
+                )}
               </li>
             );
           }
         })}
+        <OpponentPresence />
       </ul>
       <Status
         whoIsCurrentlyTyping={whoIsCurrentlyTyping}
