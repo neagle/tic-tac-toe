@@ -27,13 +27,13 @@ const useTypingStatus = (
 
   const stopTyping = () => {
     setStartedTyping(false);
-    void channel.presence.update("");
+    void channel.presence.update({ typing: false });
   };
 
   const onType = (inputValue: string) => {
     if (!startedTyping) {
       setStartedTyping(true);
-      void channel.presence.update("typing");
+      void channel.presence.update({ typing: true });
     }
 
     if (timer) {
@@ -56,7 +56,7 @@ const useTypingStatus = (
     ) => {
       const { data, clientId } = update;
 
-      if (data === "typing") {
+      if (data.typing) {
         setWhoIsCurrentlyTyping((currentlyTyping) => [
           ...currentlyTyping,
           clientId,
