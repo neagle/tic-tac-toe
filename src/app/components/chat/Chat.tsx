@@ -92,8 +92,6 @@ const Chat = () => {
     }
   };
 
-  console.log("game.id", game.id);
-
   return (
     <div className="flex flex-col h-full">
       <ul className="p-2 grow bg-white min-h-[200px] sm:min-h-0">
