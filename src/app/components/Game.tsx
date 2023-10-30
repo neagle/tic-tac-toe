@@ -30,19 +30,16 @@ const Game = () => {
     }
   });
 
-  const { presenceData } = usePresence<string>(`game:${game.id}`);
-  const presentInChannel = presenceData.map((p) => p.clientId);
-
   const opponentId = useMemo(
     () => game.players.filter((id) => id !== playerId)[0],
     [game.players, playerId]
   );
 
-  const opponentIsPresent = useMemo(() => {
-    return Boolean(
-      presentInChannel.find((clientId) => clientId === opponentId)
-    );
-  }, [presentInChannel, opponentId]);
+  const { presenceData } = usePresence(`game:${game.id}`);
+  const opponentIsPresent = useMemo(
+    () => Boolean(presenceData.find((p) => p.clientId === opponentId)),
+    [presenceData, opponentId]
+  );
 
   return (
     <GameContext.Provider value={{ opponentId, opponentIsPresent }}>

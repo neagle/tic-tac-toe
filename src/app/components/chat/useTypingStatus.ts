@@ -20,16 +20,20 @@ const useTypingStatus = (
   );
   const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
 
+  useEffect(() => {
+    // Declare the user present on the channel
+    void channel.presence.enter("");
+  }, [channel]);
+
   const stopTyping = () => {
     setStartedTyping(false);
-    void channel.presence.update("");
+    void channel.presence.update({ typing: false });
   };
 
   const onType = (inputValue: string) => {
     if (!startedTyping) {
       setStartedTyping(true);
-      void channel.publish("startedTyping", playerId);
-      void channel.presence.update("typing");
+      void channel.presence.update({ typing: true });
     }
 
     if (timer) {
@@ -52,7 +56,7 @@ const useTypingStatus = (
     ) => {
       const { data, clientId } = update;
 
-      if (data === "typing") {
+      if (data.typing) {
         setWhoIsCurrentlyTyping((currentlyTyping) => [
           ...currentlyTyping,
           clientId,
@@ -69,6 +73,7 @@ const useTypingStatus = (
       handlePresenceUpdate,
     );
 
+    // Clean up function
     return () => {
       channel.presence.unsubscribe("update");
       if (timer) {
