@@ -48,54 +48,48 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <ul className="p-2 grow bg-white min-h-[200px] sm:min-h-0">
-        {messages.map((message) => {
-          const name = playerName(message.clientId, game.players);
-          const isSystemMessage = !Boolean(name);
+    <div className="chat">
+      <div>
+        <ul className="messages">
+          {messages.map((message) => {
+            const name = playerName(message.clientId, game.players);
+            const isSystemMessage = !Boolean(name);
 
-          if (isSystemMessage) {
-            return (
-              <li key={message.id} className="text-gray-500">
-                {message.text}
-              </li>
-            );
-          } else {
-            return (
-              <li key={message.id} className="group/message">
-                <b
-                  className={classnames(
-                    {
-                      "text-orange-400": name === playerNames[0],
-                      "text-green-600": name === playerNames[1],
-                    },
-                    ["font-mono"]
-                  )}
-                >
-                  {name}:
-                </b>{" "}
-                {message.text}
-              </li>
-            );
-          }
-        })}
-      </ul>
-      <div className="flex">
-        <input
-          className="grow p-2 focus:outline outline-4 outline-red-500"
-          type="text"
-          autoFocus={true}
-          onChange={onChange}
-          onKeyDown={onKeyDown}
-          value={inputValue}
-        />
-        <button
-          className="p-2 pr-0 disabled:opacity-50"
-          onClick={onSend}
-          disabled={inputValue === ""}
-        >
-          Send
-        </button>
+            if (isSystemMessage) {
+              return (
+                <li key={message.id} className="system-message">
+                  {message.text}
+                </li>
+              );
+            } else {
+              return (
+                <li key={message.id} className="user-message">
+                  <b
+                    className={classnames({
+                      "player-x": name === playerNames[0],
+                      "player-o": name === playerNames[1],
+                    })}
+                  >
+                    {name}:
+                  </b>{" "}
+                  {message.text}
+                </li>
+              );
+            }
+          })}
+        </ul>
+        <div className="chat-input">
+          <input
+            type="text"
+            autoFocus={true}
+            onChange={onChange}
+            onKeyDown={onKeyDown}
+            value={inputValue}
+          />
+          <button onClick={onSend} disabled={inputValue === ""}>
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );
