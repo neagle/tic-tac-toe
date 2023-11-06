@@ -15,7 +15,7 @@
     "@types/react-dom": "18.2.7",
     "@uidotdev/usehooks": "^2.3.1",
     "@vercel/kv": "^0.2.3",
-    "ably": "^1.2.45",
+    "ably": "^1.2.47",
     "autoprefixer": "10.4.16",
     "classnames": "^2.3.2",
     "eslint": "8.50.0",
