@@ -12,6 +12,26 @@ body {
   background: rgb(var(--background-rgb));
 }
 
+main {
+  @apply flex min-h-screen flex-col items-center p-24;
+
+  > h1 {
+    @apply text-xl mb-5 font-bold;
+  }
+}
+
+.game {
+  @apply flex flex-col sm:flex-row;
+
+  > :first-child {
+    @apply text-center;
+  }
+
+  > :last-child {
+    @apply w-80;
+  }
+}
+
 .grid {
   --size: 200px;
   --gridSize: 5px;
@@ -156,6 +176,10 @@ body {
       transform: rotate(45deg);
     }
   }
+
+  + button {
+    @apply border-4 border-black p-2 hover:bg-green-500 transition-colors mb-8 sm:mb-0;
+  }
 }
 
 @keyframes drawInHorizontal {
@@ -223,5 +247,122 @@ body {
     right: var(--offset);
     bottom: var(--offset);
     left: var(--offset);
+  }
+}
+
+.chat {
+  > div {
+    @apply flex flex-col h-full grow;
+  }
+
+  .messages {
+    @apply p-2 grow bg-white min-h-[200px] sm:min-h-0;
+  }
+
+  .chat-input {
+    @apply flex;
+
+    input {
+      @apply grow p-2 focus:outline outline-4 outline-red-500;
+    }
+
+    button {
+      @apply p-2 pr-0 disabled:opacity-50;
+    }
+  }
+}
+
+.system-message {
+  @apply text-gray-500;
+}
+
+.user-message {
+  @apply block border-green-100;
+
+  button {
+    /* Make the button and pop-out invisible until the user hovers over them */
+    > span {
+      @apply opacity-0 cursor-default transition-opacity;
+    }
+    > ul {
+      @apply opacity-0 transition-opacity z-10 pointer-events-none;
+    }
+  }
+
+  &:hover {
+    .create-reaction {
+      /* Reveal the create reaction button when the user hovers over the message */
+      @apply opacity-100;
+
+      button > span {
+        @apply opacity-100;
+      }
+
+      /* Reveal the list of emojis when the user hovers over the button */
+      &:hover {
+        button > ul {
+          @apply opacity-100 pointer-events-auto;
+        }
+      }
+    }
+  }
+
+  > b {
+    @apply font-mono;
+  }
+}
+
+.player-x {
+  @apply text-orange-400;
+}
+
+.player-o {
+  @apply text-green-600;
+}
+
+.create-reaction {
+  @apply ml-1;
+
+  > button {
+    @apply relative;
+
+    > span {
+      @apply text-sm pl-1 pr-1;
+    }
+  }
+
+  ul {
+    @apply absolute flex -right-1 rounded-lg bg-white p-1 shadow-md;
+
+    > li {
+      @apply inline-block;
+
+      a {
+        @apply rounded-full cursor-pointer inline-block text-2xl p-1 pt-0 origin-center scale-75 hover:scale-100 transition-transform;
+
+        &.selected {
+          @apply bg-green-500;
+        }
+      }
+    }
+  }
+}
+
+.status {
+  @apply p-2 text-xs text-gray-500;
+}
+
+.display-reactions {
+  @apply ml-7 -mt-1;
+
+  > b {
+    @apply ml-1;
+  }
+}
+
+.play-again-link {
+  @apply mt-2;
+  a {
+    @apply cursor-pointer underline underline-offset-2 text-blue-500;
   }
 }

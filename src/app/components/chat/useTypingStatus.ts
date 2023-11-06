@@ -56,7 +56,7 @@ const useTypingStatus = (
     ) => {
       const { data, clientId } = update;
 
-      if (data.typing) {
+      if (data?.typing) {
         setWhoIsCurrentlyTyping((currentlyTyping) => [
           ...currentlyTyping,
           clientId,
