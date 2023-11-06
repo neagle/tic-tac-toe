@@ -86,7 +86,6 @@ const Grid = ({ className = "" }: GridProps) => {
               .then(setGame)
               .catch((error) => console.log(error));
           }}
-          className=""
         >
           Play again?
         </button>
