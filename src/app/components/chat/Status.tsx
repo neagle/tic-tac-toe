@@ -23,7 +23,7 @@ const Status = ({
   );
 
   return (
-    <div className={`${className}`}>
+    <div className={`status ${className}`}>
       {opponentIsTyping.length > 0
         ? `${playerName(opponentIsTyping[0], game.players)} is typing…`
         : defaultText}

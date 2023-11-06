@@ -53,13 +53,11 @@ const Grid = ({ className = "" }: GridProps) => {
   };
 
   return (
-    <>
+    <div>
       <Status game={game} playerId={playerId} isMyMove={isMyMove} />
       <section
-        className={classnames({
-          grid: true,
+        className={classnames(`grid ${className}`, {
           "my-move": isMyMove && !gameResult,
-          [className]: true,
         })}
       >
         {grid.map((row, rowIndex) => {
@@ -88,12 +86,12 @@ const Grid = ({ className = "" }: GridProps) => {
               .then(setGame)
               .catch((error) => console.log(error));
           }}
-          className="border-4 border-black p-2 hover:bg-green-500 transition-colors mb-8 sm:mb-0"
+          className=""
         >
           Play again?
         </button>
       )}
-    </>
+    </div>
   );
 };
 
@@ -143,7 +141,7 @@ const Status = ({
     }
   }
 
-  return <div className="">{statusText}</div>;
+  return <div>{statusText}</div>;
 };
 
 export default Grid;
