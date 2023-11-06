@@ -19,7 +19,7 @@ const Game = () => {
   const { game, playerId, setGame } = useAppContext();
 
   // Subscribe to updates from the game channel
-  useChannel(game.id, (message: Ably.Types.Message) => {
+  useChannel(`game:${game.id}`, (message: Ably.Types.Message) => {
     const { name, data } = message;
 
     if (name === "update") {
@@ -34,10 +34,8 @@ const Game = () => {
 
   return (
     <GameContext.Provider value={{ opponentId }}>
-      <div className="flex flex-col sm:flex-row">
-        <div className="text-center">
-          <Grid />
-        </div>
+      <div className="game">
+        <Grid />
       </div>
     </GameContext.Provider>
   );

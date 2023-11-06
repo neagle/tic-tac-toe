@@ -11,6 +11,7 @@ import { getGameResult, emptyGame, isPlayersMove } from "../gameUtils";
 const PLAYER_ID = "tic-tac-toe-playerId";
 let playerId: string = localStorage.getItem(PLAYER_ID) || "";
 if (!playerId || typeof playerId !== "string") {
+  // Generate a random uuid for first-time players
   playerId = uuid();
   localStorage.setItem(PLAYER_ID, playerId);
 }
@@ -109,8 +110,8 @@ export default function App() {
           } as AppContext
         }
       >
-        <main className="flex min-h-screen flex-col items-center p-24">
-          <h1 className="text-xl mb-5 font-bold">Tic-Tac-Toe</h1>
+        <main>
+          <h1>Tic-Tac-Toe</h1>
           {game.id && <Game />}
         </main>
       </AppContext.Provider>
