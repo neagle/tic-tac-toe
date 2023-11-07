@@ -6,11 +6,9 @@ type DisplayReactionsProps = {
 
 const DisplayReactions = ({ reactions }: DisplayReactionsProps) => {
   return (
-    <div className="ml-4">
+    <div className="display-reactions">
       {reactions.map((reaction) => (
-        <b key={reaction.id} className="m-1">
-          {reaction.data.body}
-        </b>
+        <b key={reaction.id}>{reaction.data.body}</b>
       ))}
     </div>
   );

@@ -43,15 +43,9 @@ const Game = () => {
 
   return (
     <GameContext.Provider value={{ opponentId, opponentIsPresent }}>
-      <div className="flex flex-col sm:flex-row">
-        <div className="text-center">
-          <Grid />
-        </div>
-        {game.players.length > 1 && (
-          <div className="w-80">
-            <Chat />
-          </div>
-        )}
+      <div className="game">
+        <Grid />
+        {game.players.length > 1 && <Chat />}
       </div>
     </GameContext.Provider>
   );

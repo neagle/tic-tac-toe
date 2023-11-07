@@ -1,0 +1,10 @@
+{
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#54143A",
+    "titleBar.activeBackground": "#761B51",
+    "titleBar.activeForeground": "#FEFCFD"
+  },
+  "files.associations": {
+    "*.css": "tailwindcss"
+  }
+}

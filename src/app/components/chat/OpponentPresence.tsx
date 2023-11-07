@@ -39,17 +39,18 @@ const OpponentStatus = () => {
   return (
     <>
       {shouldShowOpponentMessage && !opponentIsPresent ? (
-        <li className="text-gray-500">Your opponent has left the&nbsp;game.</li>
+        <li className="system-message">
+          Your opponent has left the&nbsp;game.
+        </li>
       ) : null}
       {shouldShowOpponentMessage && !opponentIsPresent && !gameResult ? (
-        <li className="mt-2">
+        <li className="play-again-link">
           <a
             onClick={() => {
               fetchGame(true)
                 .then(setGame)
                 .catch((error) => console.log(error));
             }}
-            className="cursor-pointer underline underline-offset-2 text-blue-500"
           >
             Play again?
           </a>

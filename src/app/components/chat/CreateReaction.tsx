@@ -53,56 +53,24 @@ const Reaction = ({
   };
 
   return (
-    <span
-      className={classnames(["text-sm", "ml-2", "group/reactions", className])}
-    >
-      <span className="cursor-pointer text-blue-500 hover:text-blue-700 relative">
-        <span className="opacity-50">🙂</span>
-        <ul
-          className={classnames([
-            "opacity-0",
-            "point-events-none",
-            "group-hover/reactions:opacity-100",
-            "group-hover/reactions:pointer-events-auto",
-            "transition-all",
-            "absolute",
-            "bottom-0",
-            "translate-y-full",
-            "left-0",
-            "flex",
-            "border",
-            "bg-white",
-            "rounded-lg",
-          ])}
-        >
+    <span className={`create-reaction ${className}`}>
+      <button>
+        <span>🙂</span>
+        <ul>
           {EMOJIS.map((emoji) => (
-            <li key={emoji} className="inline-block">
+            <li key={emoji}>
               <a
                 onClick={handleReactionClick}
-                className={classnames(
-                  {
-                    "bg-green-500": alreadyReacted(emoji),
-                  },
-                  [
-                    "rounded-full",
-                    "cursor-pointer",
-                    "inline-block",
-                    "text-2xl",
-                    "p-1",
-                    "pt-0",
-                    "origin-center",
-                    "scale-75",
-                    "hover:scale-100",
-                    "transition-transform",
-                  ]
-                )}
+                className={classnames({
+                  selected: alreadyReacted(emoji),
+                })}
               >
                 {emoji}
               </a>
             </li>
           ))}
         </ul>
-      </span>
+      </button>
     </span>
   );
 };
