@@ -7,6 +7,18 @@ Play Tic-Tac-Toe with other players online including a handy chat box with which
 
 (If you don't have anyone else to play with, you can be your own opponent by opening up the URL in a separate browser or a private/incognito window/tab.)
 
+## Branches
+
+This project was created for a series of blog posts, so it has five permanent branches to represent steps along the way.
+
+1. [1-initial-game](/neagle/tic-tac-toe/tree/1-initial-game)
+2. [2-chat](/neagle/tic-tac-toe/tree/2-chat)
+3. [3-typing-status](/neagle/tic-tac-toe/tree/3-typing-status)
+4. [4-presence](/neagle/tic-tac-toe/tree/4-presence)
+5. [5-reaction-emojis](/neagle/tic-tac-toe/tree/5-reaction-emojis)
+
+To follow along with the posts, you should create a new fork, being sure to **uncheck** the default "Copy the `main` branch only" field so that you get all branches. Then checkout `1-initial-game` to get started.
+
 ## Dependencies
 
 To deploy your own version, you'll need a few things:
