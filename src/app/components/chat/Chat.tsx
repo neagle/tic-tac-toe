@@ -21,11 +21,7 @@ const Chat = () => {
     }
   };
 
-  // const { channel } = useChannel(`[?rewind=100]game:${game.id}`, onMessage);
-  const { channel } = useChannel(
-    `game:${game.id}`,
-    (message: Ably.Types.Message) => console.log("message:", message)
-  );
+  const { channel } = useChannel(`[?rewind=100]game:${game.id}`, onMessage);
 
   // Clear the chat when the game changes
   useEffect(() => {
