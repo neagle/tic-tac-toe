@@ -21,7 +21,7 @@ main {
 }
 
 .game {
-  @apply flex flex-col;
+  @apply flex flex-col sm:flex-row;
 
   > :first-child {
     @apply text-center;
