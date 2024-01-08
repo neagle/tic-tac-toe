@@ -107,7 +107,7 @@ export default function App() {
       >
         <main>
           <h1>Tic-Tac-Toe</h1>
-          {game.id && <Game />}
+          {game.id && <Game key={game.id} />}
         </main>
       </AppContext.Provider>
     </AblyProvider>
